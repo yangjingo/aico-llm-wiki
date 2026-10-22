@@ -96,39 +96,40 @@ window.__ModuleLoader__.load({
       return h('pre', { className: 'lw-pre' }, text)
     }
     // ── 样式 ──────────────────────────────────────────────────────────────
-    // 颜色一律用真实存在的 --dsw-alias-* 变量。回退色只为"变量缺失"兜底，
-    // 不作主色——否则又回到上一版那种"看着像别人的皮肤"。
+    // 配色：华为红三色体系（docs/spec/05-huawei-redesign.md）。
+    // 刻意不走 --dsw-* 主题 token——体系要求「红 + 灰蓝 + 中性灰」固定白底，
+    // 跟主题换色会破坏三色纪律。红 #b5333b 只给重点与警示。
     var CSS = [
       '.lw-root{',
-      '--lw-fg:var(--dsw-alias-label-primary,#e6e6e8);',
-      '--lw-fg2:var(--dsw-alias-label-secondary,rgba(230,230,232,.72));',
-      '--lw-fg3:var(--dsw-alias-label-tertiary,rgba(230,230,232,.5));',
-      '--lw-fg4:var(--dsw-alias-label-caption,rgba(230,230,232,.4));',
-      '--lw-line:var(--dsw-alias-border-l2,rgba(127,127,127,.22));',
-      '--lw-line-soft:var(--dsw-alias-border-l1,rgba(127,127,127,.13));',
-      '--lw-surface:var(--dsw-alias-bg-base,#1a1a1c);',
-      '--lw-raise:var(--dsw-alias-bg-layer-1,rgba(127,127,127,.05));',
-      '--lw-hover:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.10));',
-      '--lw-active:var(--dsw-alias-interactive-bg-active,rgba(127,127,127,.16));',
-      '--lw-brand:var(--dsw-alias-brand-primary,#4d6bfe);',
-      '--lw-ok:var(--dsw-alias-state-success-primary,#3ecf8e);',
-      '--lw-bad:var(--dsw-alias-state-error-primary,#ef6b6b);',
-      '--lw-warn:var(--dsw-alias-state-warn-primary,#e0a34a);',
-      '--lw-info:var(--dsw-alias-state-business-primary,#5b9dff);',
-      // 字体统一挂在这里，其余全部继承。数值取自 DSH 自己的字体阶梯，
-      // 不再各处手写 px——手写的结果就是 11/11.5/12/12.5/13 混在一个面板里。
-      'font:var(--dsw-font-xs-13,13px/20px system-ui,sans-serif);',
+      '--lw-fg:#1a1a1c;',
+      '--lw-fg2:#585860;',
+      '--lw-fg3:#566472;',
+      '--lw-fg4:#8a929c;',
+      '--lw-line:#d5d9de;',
+      '--lw-line-soft:#e7e7e7;',
+      '--lw-surface:#ffffff;',
+      '--lw-raise:#fafafa;',
+      '--lw-hover:#f2f3f5;',
+      '--lw-active:#e9ebee;',
+      '--lw-brand:#b5333b;',
+      '--lw-ok:#566472;',
+      '--lw-bad:#b5333b;',
+      '--lw-warn:#cf6b72;',
+      '--lw-info:#1565c0;',
+      // 字体统一挂在这里，其余全部继承。双字体铁律：中文 Noto Sans SC，
+      // 数字/英文/mono 小标签 JetBrains Mono（中文绝不能只挂 mono——无中文字形）。
+      'font:var(--dsw-font-xs-13,13px/20px \'Noto Sans SC\',sans-serif);',
       'color:var(--lw-fg);caret-color:var(--lw-brand)}',
-      '.lw-root ::selection{background:var(--dsw-alias-bg-multi-select,rgba(77,107,254,.30))}',
+      '.lw-root ::selection{background:rgba(181,51,59,.25)}',
       '.lw-root :focus-visible{outline:2px solid var(--lw-brand);outline-offset:1px;border-radius:6px}',
-      '.lw-scroll{scrollbar-width:thin;scrollbar-color:var(--dsw-alias-scrollbar-bg-l1,rgba(127,127,127,.35)) transparent}',
+      '.lw-scroll{scrollbar-width:thin;scrollbar-color:rgba(86,100,114,.35) transparent}',
       '.lw-scroll::-webkit-scrollbar{width:10px;height:10px}',
       '.lw-scroll::-webkit-scrollbar-track{background:transparent}',
-      '.lw-scroll::-webkit-scrollbar-thumb{background:var(--dsw-alias-scrollbar-bg-l1,rgba(127,127,127,.35));',
+      '.lw-scroll::-webkit-scrollbar-thumb{background:rgba(86,100,114,.35);',
       'border-radius:99px;border:3px solid transparent;background-clip:content-box}',
-      '.lw-scroll::-webkit-scrollbar-thumb:hover{background:var(--dsw-alias-scrollbar-hover-l1,rgba(127,127,127,.55));background-clip:content-box}',
+      '.lw-scroll::-webkit-scrollbar-thumb:hover{background:rgba(86,100,114,.55);background-clip:content-box}',
       '.lw-mask{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;',
-      'background:var(--dsw-alias-bg-mask-drop,rgba(0,0,0,.45))}',
+      'background:rgba(21,23,28,.45)}',
       // 面板自己管布局。这里刻意**不用 DSH 的 Modal 原语**：
       // 它的 .dialog 写死了 width:min(380px,100%)——那是给 RiskConfirmation
       // 这类确认框定的尺寸，把一张 1040px 的数据表塞进去会被压扁。
@@ -139,15 +140,15 @@ window.__ModuleLoader__.load({
       // 阴影也走 DSH 的 token。原来写死 rgba(0,0,0,.20/.36) —— 深色主题下
       // 黑色阴影几乎看不见，而浅色主题下它又偏重，两边都不跟主题。
       // 字面值退到 var() 的回退位里（那也是本文件里唯一允许出现字面色值的地方）。
-      'box-shadow:var(--dsw-shadow-lv2,0 1px 2px rgba(0,0,0,.20),0 16px 48px rgba(0,0,0,.36))}',
+      'box-shadow:0 1px 2px rgba(0,0,0,.08),0 16px 48px rgba(0,0,0,.18)}',
       '.lw-shell{display:flex;flex-direction:column;flex:1;min-height:0;width:100%}',
       '.lw-head{display:flex;align-items:center;gap:9px;padding:0 0 12px}',
       '.lw-headicon{display:flex;align-items:center;color:var(--lw-brand)}',
-      '.lw-title{font:var(--dsw-font-s-strong-14,600 14px/22px system-ui,sans-serif)}',
-      '.lw-path{margin-left:auto;font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg4);font-variant-numeric:tabular-nums;',
+      '.lw-title{font:var(--dsw-font-s-strong-14,600 14px/22px \'Noto Sans SC\',sans-serif)}',
+      '.lw-path{margin-left:auto;font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg4);font-variant-numeric:tabular-nums;',
       'max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:rtl;text-align:left}',
       '.lw-tabs{display:flex;align-items:center;gap:6px;padding:0 0 10px;border-bottom:1px solid var(--lw-line-soft);flex-wrap:wrap}',
-      '.lw-tabsum{margin-left:auto;font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg3);font-variant-numeric:tabular-nums}',
+      '.lw-tabsum{margin-left:auto;font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg3);font-variant-numeric:tabular-nums}',
       '.lw-body{flex:1;min-height:0;overflow:auto;padding:12px 0 18px}',
       // 页签之下的第二级导航（能力页签里的 工具/技能）。
       // 用一条浅底把两段"焊"在一起，跟顶部页签一眼可分——否则两级导航长得一样，
@@ -157,12 +158,13 @@ window.__ModuleLoader__.load({
       '.lw-seg>*{border:0!important}',
       '.lw-sec{margin:0 0 20px}',
       '.lw-sec-h{display:flex;align-items:baseline;gap:8px;margin:0 0 8px;flex-wrap:wrap}',
-      '.lw-sec-t{font:var(--dsw-font-xxs-strong-12,600 12px/18px system-ui,sans-serif)}',
-      '.lw-sec-n{font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg3);font-variant-numeric:tabular-nums}',
-      '.lw-note{font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);line-height:1.6;color:var(--lw-fg3);margin:6px 0 0}',
+      '.lw-sec-t{font:var(--dsw-font-xxs-strong-12,600 12px/18px \'Noto Sans SC\',sans-serif)}',
+      '.lw-sec-n{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg3);font-variant-numeric:tabular-nums}',
+      '.lw-note{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);line-height:1.6;color:var(--lw-fg3);margin:6px 0 0}',
       '.lw-table{width:100%;border-collapse:collapse;table-layout:fixed}',
-      '.lw-th{position:sticky;top:0;z-index:2;text-align:left;font:var(--dsw-font-xxxs-strong-11,500 11px/16px system-ui,sans-serif);color:var(--lw-fg4);',
-      'padding:6px 8px;background:var(--lw-surface);border-bottom:1px solid var(--lw-line);white-space:nowrap}',
+      // 表头 = 标准表格语汇：品牌红底 + 白字居中粗体（独立于卡片的浅灰边框体系）。
+      '.lw-th{position:sticky;top:0;z-index:2;text-align:center;font:var(--dsw-font-xxxs-strong-11,700 11px/16px \'Noto Sans SC\',sans-serif);color:#fff;',
+      'padding:6px 8px;background:#b5333b;border-bottom:1px solid #9c2c33;white-space:nowrap}',
       '.lw-th.r,.lw-td.r{text-align:right}',
       '.lw-td{padding:7px 8px;border-bottom:1px solid var(--lw-line-soft);vertical-align:middle;',
       'overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
@@ -171,31 +173,31 @@ window.__ModuleLoader__.load({
       '.lw-tr.x[aria-expanded="true"]>.lw-td{background:var(--lw-active)}',
       '.lw-td.detail{padding:0;white-space:normal;background:var(--lw-raise)}',
       '.lw-num{font-variant-numeric:tabular-nums;color:var(--lw-fg2)}',
-      '.lw-id{font-family:var(--ds-font-family-code,ui-monospace,Menlo,monospace)}',
-      '.lw-src{font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);font-family:var(--ds-font-family-code,ui-monospace,Menlo,monospace);color:var(--lw-fg3)}',
+      '.lw-id{font-family:\'JetBrains Mono\',\'Noto Sans SC\',ui-monospace,monospace}',
+      '.lw-src{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);font-family:\'JetBrains Mono\',\'Noto Sans SC\',ui-monospace,monospace;color:var(--lw-fg3)}',
       // 双行单元格：主行是标识符，副行是用途。列仍然是固定的，只是行变高了。
       '.lw-2l{display:flex;flex-direction:column;gap:1px;min-width:0;white-space:normal}',
-      '.lw-sub{font:var(--dsw-font-xxxs-11,11px/15px system-ui,sans-serif);color:var(--lw-fg4);',
+      '.lw-sub{font:var(--dsw-font-xxxs-11,11px/15px \'Noto Sans SC\',sans-serif);color:var(--lw-fg4);',
       'overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
       // 工具名 + 行内状态标记。状态写在行里，不靠位置表达——
       // 位置一旦随勾选变化，就没法连续点第二下了。
-      '.lw-name{font-family:var(--ds-font-family-code,ui-monospace,Menlo,monospace);',
+      '.lw-name{font-family:\'JetBrains Mono\',\'Noto Sans SC\',ui-monospace,monospace;',
       'display:inline-flex;align-items:center;gap:6px;min-width:0}',
-      '.lw-off{font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);line-height:15px;padding:0 5px;',
+      '.lw-off{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);line-height:15px;padding:0 5px;',
       'border-radius:4px;border:1px solid var(--lw-line);color:var(--lw-fg4);flex:none}',
       // 族分组标题。族说一次就够，不必在每一行重复。
       '.lw-group>.lw-td{padding:12px 8px 4px;border-bottom:1px solid var(--lw-line);background:transparent;',
       'position:sticky;top:22px;z-index:1;background:var(--lw-surface)}',
-      '.lw-group-name{font:var(--dsw-font-xxxs-strong-11,600 11px/16px system-ui,sans-serif);color:var(--lw-fg2);',
-      'font-family:var(--ds-font-family-code,ui-monospace,Menlo,monospace)}',
-      '.lw-group-n{margin-left:8px;font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg4)}',
+      '.lw-group-name{font:var(--dsw-font-xxxs-strong-11,600 11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg2);',
+      'font-family:\'JetBrains Mono\',\'Noto Sans SC\',ui-monospace,monospace}',
+      '.lw-group-n{margin-left:8px;font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg4)}',
       // 族标题是**真的按钮**：键盘可达、有 aria-expanded。
       // 折叠控件用 div 是常见的偷懒，代价是键盘用户用不了。
       '.lw-groupbtn{display:inline-flex;align-items:baseline;gap:2px;padding:2px 6px;margin:0 0 0 -6px;',
       'border:0;border-radius:6px;background:none;color:inherit;cursor:pointer;font:inherit;text-align:left}',
       '.lw-groupbtn:hover{background:var(--lw-hover)}',
       '.lw-groupbtn:focus-visible{outline:2px solid var(--lw-brand);outline-offset:1px}',
-      '.lw-group-chev{flex:none;width:12px;color:var(--lw-fg3);font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif)}',
+      '.lw-group-chev{flex:none;width:12px;color:var(--lw-fg3);font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif)}',
       // 展开控件：一个去掉了所有默认外观的 button。
       // 它必须**看得见焦点**——键盘用户靠它知道自己在哪一格上。
       '.lw-chevbtn{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;',
@@ -209,7 +211,7 @@ window.__ModuleLoader__.load({
       '.c-ok{color:var(--lw-ok)}.c-bad{color:var(--lw-bad)}.c-warn{color:var(--lw-warn)}',
       '.c-info{color:var(--lw-info)}.c-dim{color:var(--lw-fg4)}.c-2{color:var(--lw-fg2)}.c-3{color:var(--lw-fg3)}',
       '.lw-exp{padding:12px 14px 16px;border-bottom:1px solid var(--lw-line-soft);line-height:1.65}',
-      '.lw-meta{display:flex;flex-wrap:wrap;gap:5px 14px;font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg3);',
+      '.lw-meta{display:flex;flex-wrap:wrap;gap:5px 14px;font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg3);',
       'font-variant-numeric:tabular-nums;margin:0 0 10px}',
       '.lw-srclist{margin:10px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}',
       '.lw-srclist li{display:flex;align-items:center;gap:6px;min-width:0}',
@@ -222,23 +224,23 @@ window.__ModuleLoader__.load({
       '.lw-input{box-sizing:border-box;flex:1;min-width:150px;padding:5px 9px;border-radius:7px;',
       'border:1px solid var(--lw-line);background:transparent;color:var(--lw-fg);font:inherit}',
       '.lw-input::placeholder{color:var(--lw-fg4)}',
-      '.lw-chip{font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);padding:1px 7px;border-radius:99px;border:1px solid var(--lw-line);color:var(--lw-fg2);white-space:nowrap}',
+      '.lw-chip{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);padding:1px 7px;border-radius:99px;border:1px solid var(--lw-line);color:var(--lw-fg2);white-space:nowrap}',
       '.lw-chip.lw-on{border-color:var(--lw-brand);color:var(--lw-fg)}',
 // 状态胶囊：给「状态」这一类事实一个统一的视觉语言（点 + 底色 + 描边），
 // 颜色取自语义 token；跳过/已产出/待处理/放弃 一眼可辨，不必读文字。
-'.lw-st{display:inline-flex;align-items:center;gap:5px;padding:1px 8px;border-radius:99px;border:1px solid var(--lw-line);font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);white-space:nowrap;color:var(--lw-fg2)}',
+'.lw-st{display:inline-flex;align-items:center;gap:5px;padding:1px 8px;border-radius:99px;border:1px solid var(--lw-line);font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);white-space:nowrap;color:var(--lw-fg2)}',
 '.lw-st .d{width:6px;height:6px;border-radius:99px;background:currentColor;opacity:.85;flex:none}',
 '.lw-st.ok{color:var(--lw-ok);border-color:color-mix(in srgb,var(--lw-ok) 32%,transparent);background:color-mix(in srgb,var(--lw-ok) 9%,transparent)}',
 '.lw-st.warn{color:var(--lw-warn);border-color:color-mix(in srgb,var(--lw-warn) 32%,transparent);background:color-mix(in srgb,var(--lw-warn) 9%,transparent)}',
 '.lw-st.bad{color:var(--lw-bad);border-color:color-mix(in srgb,var(--lw-bad) 32%,transparent);background:color-mix(in srgb,var(--lw-bad) 9%,transparent)}',
 '.lw-st.info{color:var(--lw-info);border-color:color-mix(in srgb,var(--lw-info) 32%,transparent);background:color-mix(in srgb,var(--lw-info) 9%,transparent)}',
 '.lw-st.dim{color:var(--lw-fg4);background:var(--lw-raise)}',
-      '.lw-msg{font:var(--dsw-font-xxs-12,12px/18px system-ui,sans-serif);line-height:1.5;padding:8px 10px;border-radius:8px;margin:0 0 12px}',
+      '.lw-msg{font:var(--dsw-font-xxs-12,12px/18px \'Noto Sans SC\',sans-serif);line-height:1.5;padding:8px 10px;border-radius:8px;margin:0 0 12px}',
       '.lw-msg.ok{color:var(--lw-ok);border:1px solid var(--lw-line)}',
       '.lw-msg.err{color:var(--lw-bad);border:1px solid var(--lw-line)}',
-      '.lw-empty{font:var(--dsw-font-xxs-12,12px/18px system-ui,sans-serif);line-height:1.6;color:var(--lw-fg4);padding:14px 2px}',
+      '.lw-empty{font:var(--dsw-font-xxs-12,12px/18px \'Noto Sans SC\',sans-serif);line-height:1.6;color:var(--lw-fg4);padding:14px 2px}',
       '.lw-list{display:flex;flex-direction:column;gap:7px}',
-      '.lw-lrow{display:flex;align-items:center;gap:10px;font:var(--dsw-font-xxs-12,12px/18px system-ui,sans-serif)}',
+      '.lw-lrow{display:flex;align-items:center;gap:10px;font:var(--dsw-font-xxs-12,12px/18px \'Noto Sans SC\',sans-serif)}',
       '.lw-lname{width:140px;flex:none;color:var(--lw-fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
       '.lw-track{flex:1;height:6px;border-radius:99px;background:var(--lw-line-soft);overflow:hidden}',
       '.lw-fill{height:100%;border-radius:99px;background:var(--lw-brand);opacity:.85}',
@@ -274,7 +276,7 @@ window.__ModuleLoader__.load({
       // 轨道态没有标签，待办数改成一个不越出圆的小点：收起侧边栏不该等于
       // "看不见有事在等"。数字仍在 title 里。
       '.lw-fb-rail .lw-fb-dot{position:absolute;top:6px;right:6px;min-width:6px;width:6px;height:6px;padding:0;font-size:0;line-height:0}',
-      '.lw-fb-badge{margin-left:auto;font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg4);font-variant-numeric:tabular-nums}',
+      '.lw-fb-badge{margin-left:auto;font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg4);font-variant-numeric:tabular-nums}',
       // ── 待办计数角标 ──
       //
       // ★ 配色**必须**用 DSH 的按钮 token 成对出现，不能自己配 "#fff 压深色底"。
@@ -286,7 +288,7 @@ window.__ModuleLoader__.load({
       'display:inline-flex;align-items:center;justify-content:center;',
       'background:var(--dsw-alias-button-primary-fill,var(--lw-brand));',
       'color:var(--dsw-alias-label-primary-foreground,#fff);',
-      'font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);font-variant-numeric:tabular-nums}',
+      'font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);font-variant-numeric:tabular-nums}',
       // ── 输入框上方的待办条 ──
       //
       // 三层约束，缺一条都会"看着不对"：
@@ -318,7 +320,7 @@ window.__ModuleLoader__.load({
       'border-radius:8px;background:var(--dsw-alias-interactive-bg-hover);',
       'color:var(--dsw-alias-label-secondary,var(--lw-fg2));',
       // 字号走 DSH 的阶梯，不手写 —— 手写的结果就是 11/11.5/12/12.5/13 混在一个面板里
-      'font:var(--dsw-font-xxs-12,12px/18px system-ui,sans-serif)}',
+      'font:var(--dsw-font-xxs-12,12px/18px \'Noto Sans SC\',sans-serif)}',
       '.lw-pend-txt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
       '.lw-pend b{color:var(--dsw-alias-label-primary,var(--lw-fg));font-variant-numeric:tabular-nums;font-weight:600}',
       // 计数是可点的入口，但**不要**做成虚线下划线 —— 一行里两条虚线下划线很吵。
@@ -333,7 +335,7 @@ window.__ModuleLoader__.load({
       'gap:4px;height:28px;padding:0 10px;border-radius:14px;cursor:pointer;',
       'border:1px solid var(--dsw-alias-border-l2);background:transparent;',
       'color:var(--dsw-alias-label-primary,var(--lw-fg));',
-      'font:var(--dsw-font-xxs-12,12px/18px system-ui,sans-serif)}',
+      'font:var(--dsw-font-xxs-12,12px/18px \'Noto Sans SC\',sans-serif)}',
       // ghost/outline 的悬停与按下
       '.lw-btn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}',
       '.lw-btn:active:not(:disabled){background:var(--dsw-alias-interactive-bg-active)}',
@@ -351,17 +353,17 @@ window.__ModuleLoader__.load({
       '.lw-tri-card{border:1px solid var(--lw-line);border-radius:10px;padding:10px 12px;background:var(--lw-raise)}',
       '.lw-tri-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}',
       '.lw-tri-title{flex:1;min-width:0;font-weight:600;color:var(--lw-fg);word-break:break-word}',
-      '.lw-tri-meta{flex:none;font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg4);font-variant-numeric:tabular-nums}',
+      '.lw-tri-meta{flex:none;font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg4);font-variant-numeric:tabular-nums}',
       // 两个来源的标签**配色要分得开**：已拒绝是"这条知识被判错"，回收站是
       // "这条暂存页不想要了" —— 语义不同，长得一样就得每次去读文字。
       '.lw-tri-tag{flex:none;padding:1px 7px;border-radius:6px;background:var(--lw-line-soft);',
-      'font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg3);white-space:nowrap}',
+      'font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg3);white-space:nowrap}',
       '.lw-tri-tag.rej{background:color-mix(in srgb,var(--lw-warn) 18%,transparent);color:var(--lw-warn)}',
       // 原因块：它是**决策输入**，所以不做成小字备注，而是卡片里第二显眼的东西。
       '.lw-tri-why{margin:8px 0 0;padding:7px 9px;border-radius:8px;border-left:3px solid var(--lw-warn);',
       'background:var(--lw-line-soft);color:var(--lw-fg2);word-break:break-word}',
       '.lw-tri-why .k{display:block;margin-bottom:3px;color:var(--lw-warn);',
-      'font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);letter-spacing:.02em}',
+      'font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);letter-spacing:.02em}',
       // 没记录原因时必须**看得出来是"没记录"**，而不是让人以为这页本来就没理由。
       '.lw-tri-why.none{border-left-color:var(--lw-line);color:var(--lw-fg4)}',
       '.lw-tri-why.none .k{color:var(--lw-fg4)}',
@@ -372,7 +374,7 @@ window.__ModuleLoader__.load({
       '.lw-tri-acts .lw-tri-ask{color:var(--lw-warn)}',
       '.lw-tri-more{flex:none;padding:0;border:0;background:none;color:var(--lw-fg3);cursor:pointer;font:inherit;',
       'text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}',
-      '.lw-hint{font:var(--dsw-font-xxs-12,12px/18px system-ui,sans-serif);line-height:1.6;color:var(--lw-fg3);padding:0 2px 10px}',
+      '.lw-hint{font:var(--dsw-font-xxs-12,12px/18px \'Noto Sans SC\',sans-serif);line-height:1.6;color:var(--lw-fg3);padding:0 2px 10px}',
       // ── 模型页签 + 提炼按键 ──
       //
       // 复用既有的 .lw-sec/.lw-table/.lw-msg，只加缺的那几个。新控件全部走
@@ -384,65 +386,65 @@ window.__ModuleLoader__.load({
       // 单一模式用第一个）。序号让"谁是第一个"不用读文字就能看出来。
       '.lw-mlist{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:4px}',
       '.lw-mitem{display:flex;align-items:center;gap:8px;padding:5px 8px;border:1px solid var(--lw-line-soft);border-radius:8px;background:var(--lw-raise)}',
-      '.lw-midx{flex:none;width:18px;text-align:right;font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg4);font-variant-numeric:tabular-nums}',
-      '.lw-mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:var(--dsw-font-xs-13,13px/20px system-ui,sans-serif);color:var(--lw-fg)}',
-      '.lw-mtag{flex:none;padding:1px 7px;border-radius:6px;background:var(--lw-line-soft);font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg3);white-space:nowrap}',
+      '.lw-midx{flex:none;width:18px;text-align:right;font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg4);font-variant-numeric:tabular-nums}',
+      '.lw-mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:var(--dsw-font-xs-13,13px/20px \'Noto Sans SC\',sans-serif);color:var(--lw-fg)}',
+      '.lw-mtag{flex:none;padding:1px 7px;border-radius:6px;background:var(--lw-line-soft);font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg3);white-space:nowrap}',
       '.lw-mact{flex:none;display:flex;gap:2px}',
       '.lw-mini{padding:1px 7px;border:1px solid var(--lw-line-soft);border-radius:6px;background:transparent;color:var(--lw-fg3);cursor:pointer;font:inherit;line-height:1.5}',
       '.lw-mini:hover:enabled{color:var(--lw-fg);border-color:var(--lw-line)}',
       '.lw-mini:disabled{opacity:.35;cursor:default}',
       '.lw-copy{margin-left:auto}',
       '.lw-sel{max-width:220px;padding:3px 6px;border:1px solid var(--lw-line-soft);border-radius:6px;',
-      'background:var(--lw-surface);color:var(--lw-fg);font:var(--dsw-font-xxs-12,12px/18px system-ui,sans-serif)}',
+      'background:var(--lw-surface);color:var(--lw-fg);font:var(--dsw-font-xxs-12,12px/18px \'Noto Sans SC\',sans-serif)}',
       '.lw-mledit{margin-top:2px}',
-      '.lw-ml-t{flex:none;width:44px;color:var(--lw-fg3);font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif)}',
-      '.lw-ml-note{color:var(--lw-fg4);font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);line-height:1.6}',
+      '.lw-ml-t{flex:none;width:44px;color:var(--lw-fg3);font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif)}',
+      '.lw-ml-note{color:var(--lw-fg4);font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);line-height:1.6}',
       // ── wiki_recall 的对话内卡片 ──
       // 刻意**不自带背景**：它嵌在宿主既有的工具行里，自己再铺一层底色
       // 会和宿主那一行的底打架（表现为一块突兀的色带）。只做排版与状态色。
       '.lw-recall{display:flex;flex-direction:column;gap:6px;padding:2px 0;min-width:0}',
       '.lw-recall-head{display:flex;align-items:center;gap:8px;min-width:0}',
-      '.lw-recall-verdict{flex:none;font:var(--dsw-font-xxxs-strong-11,600 11px/16px system-ui,sans-serif)}',
+      '.lw-recall-verdict{flex:none;font:var(--dsw-font-xxxs-strong-11,600 11px/16px \'Noto Sans SC\',sans-serif)}',
       '.lw-recall-query{color:var(--lw-fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}',
       '.lw-recall-best{flex:none;font-variant-numeric:tabular-nums}',
-      '.lw-recall-sum{font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);font-variant-numeric:tabular-nums}',
+      '.lw-recall-sum{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);font-variant-numeric:tabular-nums}',
       '.lw-recall-list{display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--lw-line-soft);padding-top:4px}',
       '.lw-recall-row{display:flex;flex-direction:column;gap:2px;padding:3px 0;min-width:0}',
       '.lw-recall-rowhead{display:flex;align-items:center;gap:7px;min-width:0}',
       '.lw-recall-dot{flex:none;font-size:var(--dsw-font-xxxs-11,11px)}',
       '.lw-recall-title{color:var(--lw-fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}',
       '.lw-recall-facts{display:flex;align-items:center;gap:5px;flex:none}',
-      '.lw-recall-chip{font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg3);',
+      '.lw-recall-chip{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg3);',
       'font-variant-numeric:tabular-nums;padding:0 5px;border:1px solid var(--lw-line-soft);border-radius:99px}',
       '.lw-recall-toggle{margin-left:auto;flex:none;cursor:pointer;background:none;border:0;padding:0 2px;',
-      'color:var(--lw-fg3);font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif)}',
+      'color:var(--lw-fg3);font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif)}',
       '.lw-recall-toggle:hover{color:var(--lw-fg)}',
       '.lw-recall-detail{display:flex;flex-direction:column;gap:2px;padding:2px 0 4px 16px;',
-      'font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg3);line-height:1.6}',
-      '.lw-recall-note{font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);line-height:1.6}',
+      'font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg3);line-height:1.6}',
+      '.lw-recall-note{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);line-height:1.6}',
       // ── 图谱页签 ──
       // 边框色/透明度按权重分档在 JS 里算（边数多，不能每条一个 class）。
       '.lw-graph{display:flex;gap:12px;min-height:0;flex:1}',
       '.lw-graph-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}',
       '.lw-graph-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}',
-      '.lw-graph-legend{display:flex;align-items:center;gap:10px;font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg3);margin-left:auto}',
+      '.lw-graph-legend{display:flex;align-items:center;gap:10px;font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg3);margin-left:auto}',
       '.lw-graph-leg{display:flex;align-items:center;gap:4px;white-space:nowrap}',
       '.lw-graph-swatch{width:9px;height:9px;border-radius:50%;flex:none}',
       '.lw-graph-svgbox{flex:1;min-height:340px;border:1px solid var(--lw-line-soft);border-radius:10px;overflow:hidden;',
-      'background:#8e5a5f;position:relative}',
+      'background:#fafafa;border-color:#d5d9de;position:relative}',
       '.lw-graph-svg{display:block;width:100%;height:100%}',
       // 文本节点标签用 SVG text，字体走 token；fill 在 JS 里按状态给。
-      '.lw-graph-svg text{font:var(--dsw-font-xxxs-11,10px/14px system-ui,sans-serif);pointer-events:none}',
+      '.lw-graph-svg text{font:var(--dsw-font-xxxs-11,10px/14px \'Noto Sans SC\',sans-serif);pointer-events:none}',
       '.lw-graph-svg .lw-gnode{cursor:pointer}',
       '.lw-graph-svg .lw-gnode:focus-visible{outline:none}',
       '.lw-graph-svg .lw-gnode:focus-visible circle{stroke:var(--lw-brand);stroke-width:2.5}',
       // 侧抽屉：与图并排，不遮图（遮住的抽屉会让你点不了背后的节点）。
       '.lw-graph-drawer{flex:none;width:320px;max-width:38%;display:flex;flex-direction:column;gap:8px;',
       'border:1px solid var(--lw-line-soft);border-radius:10px;padding:10px 12px;overflow:auto;background:var(--lw-surface)}',
-      '.lw-graph-drawer h4{margin:0;font:var(--dsw-font-s-strong-14,600 14px/22px system-ui,sans-serif)}',
-      '.lw-graph-drawer .lw-graph-meta{font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg3);display:flex;flex-wrap:wrap;gap:4px 10px}',
+      '.lw-graph-drawer h4{margin:0;font:var(--dsw-font-s-strong-14,600 14px/22px \'Noto Sans SC\',sans-serif)}',
+      '.lw-graph-drawer .lw-graph-meta{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg3);display:flex;flex-wrap:wrap;gap:4px 10px}',
       '.lw-graph-empty{padding:40px 0;text-align:center;color:var(--lw-fg3)}',
-            'border:1px solid var(--lw-line);font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg2)}',
+            'border:1px solid var(--lw-line);font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg2)}',
       'display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}',
       // ── 主面板接管（keyed main，同 aida-lld 形式）──
       '.lw-center{display:flex;flex-direction:column;width:100%;height:100%;min-height:0;',
@@ -451,8 +453,8 @@ window.__ModuleLoader__.load({
       '.lw-plug-card{display:flex;align-items:center;gap:12px;padding:14px 16px;',
       'border:1px solid var(--lw-line);border-radius:12px;background:var(--lw-raise)}',
       '.lw-plug-card--stack{flex-direction:column;align-items:stretch;gap:12px}',
-      '.lw-plug-title{font:var(--dsw-font-s-strong-14,600 14px/22px system-ui,sans-serif)}',
-      '.lw-plug-note{margin:2px 0 0;font:var(--dsw-font-xxs-12,12px/18px system-ui,sans-serif);color:var(--lw-fg2)}',
+      '.lw-plug-title{font:var(--dsw-font-s-strong-14,600 14px/22px \'Noto Sans SC\',sans-serif)}',
+      '.lw-plug-note{margin:2px 0 0;font:var(--dsw-font-xxs-12,12px/18px \'Noto Sans SC\',sans-serif);color:var(--lw-fg2)}',
     ].join('')
 
     var styled = false
@@ -1843,20 +1845,20 @@ window.__ModuleLoader__.load({
     // 边只有两种、都可解释：tag（共享标签）与 co（同一次召回共命中）。
     // 这张图要回答的是「我的知识长什么样、哪些总是一起被需要」，
     // 不是「哪些页面文本相似」——后者是检索的事，不该混进结构图里。
-    // 配色（用户指定，2026-10-22）：莫兰迪色系 + 红色画布底色。
-    // 刻意不走 --dsw-* 主题 token——这张图要有自己的性格，跟主题换色反而
-    // 会破坏红底上的对比度。四色都压了灰调（莫兰迪），在酒红底上可分。
+    // 配色（华为红三色体系，docs/spec/05-huawei-redesign.md；取代 spec 02 莫兰迪）：
+    // 红 #b5333b 只给重点（fact 主体、co 边、警示）；强调蓝 #1565c0 点睛
+    // （decision——「答案/是…」类语义）；其余映射灰蓝/辅红/中性灰。
     var GCOLOR = {
-      fact: '#7f99ac',      // 雾蓝
-      decision: '#c9a37e',  // 灰杏
-      lesson: '#8fa88b',    // 灰绿
-      howto: '#ab9bab',     // 藕紫
+      fact: '#b5333b',      // 品牌红：知识主体
+      decision: '#1565c0',  // 强调蓝：决策点睛（一页最多一两处的那类）
+      lesson: '#566472',    // 灰蓝：教训（第二色）
+      howto: '#cf6b72',     // 辅红：操作指南
     }
     var GEDGE = {
-      co: '#e8d3c6',        // 奶油白：在红底上亮且柔
-      tag: 'rgba(58,42,44,.55)', // 暗灰红：虚线，退后
+      co: '#b5333b',        // 共召回=品牌红实线：本图最强信号
+      tag: 'rgba(86,100,114,.55)', // 共享标签=灰蓝虚线：结构背景
     }
-    var GBG = '#8e5a5f'     // 莫兰迪酒红：画布底色
+    var GBG = '#fafafa'     // 浅底画布
 
     /** 纯函数：节点半径。命中越多越大，但封顶——大节点会盖住邻居。 */
     function graphNodeRadius(n) {
@@ -2035,7 +2037,7 @@ window.__ModuleLoader__.load({
                   var dimmed = !!sel && n.id !== sel && !neighbors[n.id]
                   // 隔离页不用警示红（红底上会隐身），用深灰紫压暗——
                   // 抽屉和 title 里的「已隔离」仍会说明原因。
-                  var fill = n.quarantined ? '#4d4348' : (GCOLOR[n.category] || GCOLOR.fact)
+                  var fill = n.quarantined ? '#c9ced4' : (GCOLOR[n.category] || GCOLOR.fact)
                   return h('g', {
                     key: n.id,
                     className: 'lw-gnode',
@@ -2053,7 +2055,7 @@ window.__ModuleLoader__.load({
                       fill: fill,
                       opacity: dimmed ? 0.18 : (n.status === 'staged' ? 0.55 : 0.92),
                       // 描边用底色：节点之间有呼吸感；选中用亮奶油白圈
-                      stroke: n.id === sel ? '#f5ece7' : GBG,
+                      stroke: n.quarantined ? '#b5333b' : (n.id === sel ? '#1a1a1c' : GBG),
                       strokeWidth: n.id === sel ? 2.5 : 1.5,
                       strokeDasharray: n.status === 'staged' ? '3 2' : undefined,
                     }),

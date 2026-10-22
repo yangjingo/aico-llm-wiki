@@ -111,8 +111,8 @@ if (!hasReact()) {
     && graphLabelWorthy({ id: 'x', degree: 0, hits: 0, status: 'staged' }, 'y') === true)
   check('标题截断加省略号', graphLabelCut('很长很长的标题一二三四五', 6) === '很长很长的标…')
   const st = graphEdgeStyle({ type: 'co', weight: 4, a: 'a-vm', b: 'b-8card' }, 'a-vm', {})
-  check('边档位：co 实线奶油色、选中相邻高不透明（莫兰迪红底配色）',
-    st.dash === undefined && st.stroke === '#e8d3c6' && st.opacity >= 0.9, JSON.stringify(st))
+  check('边档位：co 品牌红实线、选中相邻高不透明（华为红三色体系）',
+    st.dash === undefined && st.stroke === '#b5333b' && st.opacity >= 0.9, JSON.stringify(st))
   const dim = graphEdgeStyle({ type: 'tag', weight: 1, a: 'a-vm', b: 'b-8card' }, 'c-lesson', {})
   check('边档位：无关边压到近透明 + 虚线', dim.opacity <= 0.15 && dim.dash === '3 3', JSON.stringify(dim))
 
