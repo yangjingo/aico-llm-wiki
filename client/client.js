@@ -52,6 +52,8 @@ window.__ModuleLoader__.load({
     var MODELS_API = '/learn-wiki/api/models'
     var LLM_API = '/learn-wiki/api/llm'
     var HARVEST_API = '/learn-wiki/api/harvest'
+    // 图谱也是独立端点：建图要遍历全库，不进 8 秒轮询（与服务端同一取舍）。
+    var GRAPH_API = '/learn-wiki/api/graph'
 
     /** DSH 图标；没有原语时返回 null（不画假的代替品）。 */
     function Ico(name, size) {
@@ -418,6 +420,27 @@ window.__ModuleLoader__.load({
       '.lw-recall-detail{display:flex;flex-direction:column;gap:2px;padding:2px 0 4px 16px;',
       'font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg3);line-height:1.6}',
       '.lw-recall-note{font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);line-height:1.6}',
+      // ── 图谱页签 ──
+      // 边框色/透明度按权重分档在 JS 里算（边数多，不能每条一个 class）。
+      '.lw-graph{display:flex;gap:12px;min-height:0;flex:1}',
+      '.lw-graph-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}',
+      '.lw-graph-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}',
+      '.lw-graph-legend{display:flex;align-items:center;gap:10px;font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg3);margin-left:auto}',
+      '.lw-graph-leg{display:flex;align-items:center;gap:4px;white-space:nowrap}',
+      '.lw-graph-swatch{width:9px;height:9px;border-radius:50%;flex:none}',
+      '.lw-graph-svgbox{flex:1;min-height:340px;border:1px solid var(--lw-line-soft);border-radius:10px;overflow:hidden;background:var(--lw-raise);position:relative}',
+      '.lw-graph-svg{display:block;width:100%;height:100%}',
+      // 文本节点标签用 SVG text，字体走 token；fill 在 JS 里按状态给。
+      '.lw-graph-svg text{font:var(--dsw-font-xxxs-11,10px/14px system-ui,sans-serif);pointer-events:none}',
+      '.lw-graph-svg .lw-gnode{cursor:pointer}',
+      '.lw-graph-svg .lw-gnode:focus-visible{outline:none}',
+      '.lw-graph-svg .lw-gnode:focus-visible circle{stroke:var(--lw-brand);stroke-width:2.5}',
+      // 侧抽屉：与图并排，不遮图（遮住的抽屉会让你点不了背后的节点）。
+      '.lw-graph-drawer{flex:none;width:320px;max-width:38%;display:flex;flex-direction:column;gap:8px;',
+      'border:1px solid var(--lw-line-soft);border-radius:10px;padding:10px 12px;overflow:auto;background:var(--lw-surface)}',
+      '.lw-graph-drawer h4{margin:0;font:var(--dsw-font-s-strong-14,600 14px/22px system-ui,sans-serif)}',
+      '.lw-graph-drawer .lw-graph-meta{font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg3);display:flex;flex-wrap:wrap;gap:4px 10px}',
+      '.lw-graph-empty{padding:40px 0;text-align:center;color:var(--lw-fg3)}',
     ].join('')
 
     var styled = false
@@ -1082,6 +1105,14 @@ window.__ModuleLoader__.load({
       var busy = busyState[0], setBusy = busyState[1]
       var kfState = useState('all')
       var kFilter = kfState[0], setKFilter = kfState[1]
+
+      // 图谱跳转进来的载荷：展开并取正文。focusId 变 null 不动作——
+      // 「没有要展开的」不是「把已展开的收起来」，别把两件事搅在一起。
+      useEffect(function () {
+        if (!props.focusId) return
+        setOpen(props.focusId)
+        loadPage(props.focusId)
+      }, [props.focusId])
 
       var loadPage = useCallback(function (id) {
         setPages(function (p) {
@@ -1792,10 +1823,268 @@ window.__ModuleLoader__.load({
       )
     }
 
+    // ── 图谱：知识结构的力导向可视化 ──────────────────────────────────────
+    //
+    // 数据全部来自 /api/graph（节点带服务端算好的确定性坐标），客户端不跑
+    // 力导向——同一份数据在任何端画出的图一致，离线渲染/截图也一致。
+    //
+    // 边只有两种、都可解释：tag（共享标签）与 co（同一次召回共命中）。
+    // 这张图要回答的是「我的知识长什么样、哪些总是一起被需要」，
+    // 不是「哪些页面文本相似」——后者是检索的事，不该混进结构图里。
+    var GCOLOR = {
+      fact: 'var(--lw-brand)',
+      decision: 'var(--lw-warn)',
+      lesson: 'var(--lw-ok)',
+      howto: 'var(--lw-info)',
+    }
+
+    /** 纯函数：节点半径。命中越多越大，但封顶——大节点会盖住邻居。 */
+    function graphNodeRadius(n) {
+      return 5 + Math.min(9, 2 * Math.log1p((n.hits || 0) * 2 + (n.degree || 0)))
+    }
+
+    /** 纯函数：节点该不该带标签（标签全画会糊成一片，只画「重要的 + 被选的」）。 */
+    function graphLabelWorthy(n, selId) {
+      return n.id === selId || (n.degree || 0) > 0 || (n.hits || 0) > 0 || n.status === 'staged'
+    }
+
+    /** 纯函数：标题截断。中文 10 个字已经比节点本身宽很多了。 */
+    function graphLabelCut(title, max) {
+      var t = String(title || '')
+      var m = max || 10
+      return t.length > m ? t.slice(0, m) + '…' : t
+    }
+
+    /** 纯函数：边的视觉档位（透明度按权重分三档，虚线=纯 tag 边）。 */
+    function graphEdgeStyle(e, selId, neighbors) {
+      var active = !selId || e.a === selId || e.b === selId
+      var w = e.weight || 1
+      var op = w >= 3 ? 0.55 : w >= 2 ? 0.38 : 0.22
+      if (!active) op = 0.06
+      return {
+        stroke: e.type === 'co' ? 'var(--lw-brand)' : 'var(--lw-fg3)',
+        opacity: op,
+        dash: e.type === 'co' ? undefined : '3 3',
+        // co 边在 tag 边之上：一起被需要是更强的结构性信号
+        width: e.type === 'co' ? 1.4 + Math.min(1.6, w * 0.3) : 1,
+      }
+    }
+
+    function GraphTab(props) {
+      // 受控模式：调用方直接给图（离线渲染与截图用）——与 PanelBody 同一套惯例。
+      var controlled = !!(props && props.graph)
+      var gState = useState(controlled ? props.graph : null)
+      var graph = controlled ? props.graph : gState[0]
+      var setGraph = gState[1]
+      var errState = useState(null)
+      var err = errState[0], setErr = errState[1]
+      var selState = useState(null)
+      var sel = selState[0], setSel = selState[1]
+      var detailState = useState({})
+      var details = detailState[0], setDetails = detailState[1]
+      var msgState = useState(null)
+      var msg = msgState[0], setMsg = msgState[1]
+      var busyState = useState(false)
+      var busy = busyState[0], setBusy = busyState[1]
+
+      var loadGraph = useCallback(function () {
+        if (controlled) return
+        getJson(GRAPH_API)
+          .then(function (r) {
+            if (!r.j || !r.j.ok) throw new Error(r.error || (r.j && r.j.error) || ('HTTP ' + r.status))
+            setGraph(r.j); setErr(null)
+          })
+          .catch(function (e) { setErr(String((e && e.message) || e)) })
+      }, [controlled])
+
+      useEffect(function () { loadGraph() }, [loadGraph])
+
+      // 选中即取正文（带缓存，与知识页签 loadPage 同一套做法）。
+      var loadDetail = useCallback(function (id) {
+        if (controlled) return
+        setDetails(function (d) {
+          if (d[id]) return d
+          var next = Object.assign({}, d)
+          next[id] = { loading: true }
+          return next
+        })
+        getJson(PAGE_API + '?id=' + encodeURIComponent(id))
+          .then(function (r) {
+            setDetails(function (d) {
+              var next = Object.assign({}, d)
+              next[id] = (r.j && r.j.ok) ? { data: r.j } : { error: r.error || (r.j && r.j.error) || ('HTTP ' + r.status) }
+              return next
+            })
+          })
+          .catch(function (e) {
+            setDetails(function (d) {
+              var next = Object.assign({}, d)
+              next[id] = { error: String((e && e.message) || e) }
+              return next
+            })
+          })
+      }, [controlled])
+
+      useEffect(function () { if (sel) loadDetail(sel) }, [sel, loadDetail])
+
+      var commit = function (id) {
+        setBusy(true)
+        post('/learn-wiki/api/commit', { id: id })
+          .then(function (r) {
+            setBusy(false)
+            if (r.j && r.j.ok) {
+              setMsg({ ok: true, text: '已固化 ' + id })
+              loadGraph(); props.onChanged && props.onChanged()
+            } else {
+              setMsg({ ok: false, text: '固化失败：' + (r.error || (r.j && r.j.error) || r.status) })
+            }
+          })
+          .catch(function (e) { setBusy(false); setMsg({ ok: false, text: '固化失败：' + String((e && e.message) || e) }) })
+      }
+
+      if (err) return h('div', { className: 'lw-msg err' }, '读不到图谱：' + err + '　（' + GRAPH_API + '）')
+      if (!graph) return h('div', { className: 'lw-empty' }, '读取中…')
+
+      var nodes = graph.nodes || []
+      var edges = graph.edges || []
+      var stats = graph.stats || { nodes: nodes.length, edges: edges.length }
+      var W = graph.width || 960
+      var H = graph.height || 520
+
+      // 邻居集合：选中的节点淡出全图、只亮自己与邻居——「这一页和谁有关」
+      // 是点开一个节点时最想问的问题。
+      var neighbors = {}
+      if (sel) {
+        for (var ei = 0; ei < edges.length; ei++) {
+          var e = edges[ei]
+          if (e.a === sel) neighbors[e.b] = true
+          if (e.b === sel) neighbors[e.a] = true
+        }
+      }
+      var selNode = null
+      for (var ni = 0; ni < nodes.length; ni++) if (nodes[ni].id === sel) { selNode = nodes[ni]; break }
+      var selDetail = sel ? details[sel] : null
+
+      var legend = [
+        { c: GCOLOR.fact, t: 'fact' }, { c: GCOLOR.decision, t: 'decision' },
+        { c: GCOLOR.lesson, t: 'lesson' }, { c: GCOLOR.howto, t: 'howto' },
+      ]
+
+      return h('div', { className: 'lw-graph' },
+        h('div', { className: 'lw-graph-main' },
+          h('div', { className: 'lw-graph-toolbar' },
+            h(Btn, { onClick: loadGraph }, '刷新'),
+            h('span', { className: 'lw-tabsum' },
+              stats.nodes + ' 页 · ' + stats.edges + ' 连边'
+              + (stats.isolated ? ' · ' + stats.isolated + ' 孤立' : '')
+              + '（co ' + (stats.coEdges || 0) + ' / tag ' + (stats.tagEdges || 0) + '）'),
+            h('span', { className: 'lw-graph-legend' },
+              legend.map(function (l) {
+                return h('span', { key: l.t, className: 'lw-graph-leg' },
+                  h('span', { className: 'lw-graph-swatch', style: { background: l.c } }), l.t)
+              }),
+              h('span', { className: 'lw-graph-leg', title: '实线=同一次召回共命中（co），虚线=共享标签（tag）' }, '实线 co · 虚线 tag')),
+            msg ? h('span', { className: 'lw-msg ' + (msg.ok ? 'ok' : 'err') }, msg.text) : null
+          ),
+          nodes.length === 0
+            ? h('div', { className: 'lw-graph-empty' }, 'wiki 里还没有页面。')
+            : h('div', { className: 'lw-graph-svgbox' },
+              h('svg', {
+                className: 'lw-graph-svg',
+                viewBox: '0 0 ' + W + ' ' + H,
+                role: 'img',
+                'aria-label': '知识图谱：' + stats.nodes + ' 个页面，' + stats.edges + ' 条连边',
+              },
+                edges.map(function (e, i) {
+                  var an = null, bn = null
+                  for (var k = 0; k < nodes.length; k++) {
+                    if (nodes[k].id === e.a) an = nodes[k]
+                    if (nodes[k].id === e.b) bn = nodes[k]
+                  }
+                  if (!an || !bn) return null
+                  var st = graphEdgeStyle(e, sel, neighbors)
+                  return h('line', {
+                    key: 'e' + i,
+                    x1: an.x, y1: an.y, x2: bn.x, y2: bn.y,
+                    stroke: st.stroke, strokeWidth: st.width, opacity: st.opacity,
+                    strokeDasharray: st.dash,
+                  })
+                }),
+                nodes.map(function (n) {
+                  var r = graphNodeRadius(n)
+                  var dimmed = !!sel && n.id !== sel && !neighbors[n.id]
+                  var fill = n.quarantined ? 'var(--lw-bad)' : (GCOLOR[n.category] || GCOLOR.fact)
+                  return h('g', {
+                    key: n.id,
+                    className: 'lw-gnode',
+                    transform: 'translate(' + n.x + ',' + n.y + ')',
+                    tabIndex: 0,
+                    role: 'button',
+                    'aria-label': n.title + '（' + n.category + (n.status === 'staged' ? '，暂存' : '') + '）',
+                    onClick: function () { setSel(n.id === sel ? null : n.id) },
+                    onKeyDown: function (ev) {
+                      if (ev && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); setSel(n.id === sel ? null : n.id) }
+                    },
+                  },
+                    h('circle', {
+                      r: r,
+                    fill: fill,
+                      opacity: dimmed ? 0.18 : (n.status === 'staged' ? 0.55 : 0.9),
+                      stroke: n.id === sel ? 'var(--lw-fg)' : 'var(--lw-surface)',
+                      strokeWidth: n.id === sel ? 2.5 : 1,
+                      strokeDasharray: n.status === 'staged' ? '3 2' : undefined,
+                    }),
+                    h('title', null, n.title + ' · ' + n.category + ' · 度 ' + n.degree + ' · 命中 ' + n.hits),
+                    graphLabelWorthy(n, sel)
+                      ? h('text', {
+                          x: 0, y: r + 11,
+                          textAnchor: 'middle',
+                          fill: n.id === sel ? 'var(--lw-fg)' : 'var(--lw-fg2)',
+                          opacity: dimmed ? 0.15 : 1,
+                        }, graphLabelCut(n.title))
+                      : null
+                  )
+                })
+              )
+            )
+        ),
+        selNode ? h('div', { className: 'lw-graph-drawer' },
+          h('h4', { title: selNode.id }, selNode.title),
+          h('div', { className: 'lw-graph-meta' },
+            h('span', null, selNode.category),
+            h('span', null, selNode.status === 'staged' ? '暂存' : '已固化'),
+            h('span', null, '命中 ' + selNode.hits + (selNode.suspect ? ' · 嫌疑 ' + selNode.suspect : '')),
+            selNode.quarantined ? h('span', { className: 'c-bad' }, '已隔离') : null,
+            selNode.tags && selNode.tags.length ? h('span', null, selNode.tags.join(' · ')) : null
+          ),
+          selDetail
+            ? selDetail.loading
+              ? h('div', { className: 'lw-msg' }, '读取中…')
+              : selDetail.error
+                ? h('div', { className: 'lw-msg err' }, String(selDetail.error))
+                : h(Md, { text: (selDetail.data && selDetail.data.body) || '' })
+            : null,
+          h('div', { style: { display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: 'auto' } },
+            h(Btn, { onClick: function () { props.onInspect && props.onInspect(selNode.id) } }, '在知识页签查看'),
+            selNode.status === 'staged'
+              ? h(Btn, {
+                  className: 'primary', disabled: busy,
+                  title: (selDetail && selDetail.data && selDetail.data.blockers && selDetail.data.blockers.length)
+                    ? '缺：' + selDetail.data.blockers.join('、') : '固化后参与自动召回',
+                  onClick: function () { commit(selNode.id) },
+                }, busy ? '固化中…' : '固化')
+              : null,
+            h(Btn, { onClick: function () { setSel(null) } }, '关闭')
+          )
+        ) : null
+      )
+    }
+
     // ── 外壳 ──────────────────────────────────────────────────────────────
     var TABS = [
       { id: 'capabilities', label: '能力' },
       { id: 'knowledge', label: '知识' },
+      { id: 'graph', label: '图谱' },
       { id: 'triage', label: '分拣' },
       { id: 'supply', label: '补料' },
       { id: 'models', label: '模型' },
@@ -1814,6 +2103,13 @@ window.__ModuleLoader__.load({
         var k = s.knowledge || {}
         return '已固化 ' + num((k.committed || []).length)
           + ' · 暂存 ' + num((k.staged || []).length)
+      }
+      // 图谱页签的摘要用 /api/state 里已有的数字（knowledge 计数），
+      // 不为页签头的这一行字去多打一条建图请求。
+      if (tab === 'graph') {
+        var kg = s.knowledge || {}
+        return '已固化 ' + num((kg.committed || []).length)
+          + ' · 暂存 ' + num((kg.staged || []).length) + '（打开页签后取图谱）'
       }
       if (tab === 'triage') {
         var tr = s.triage || {}
@@ -1847,6 +2143,14 @@ window.__ModuleLoader__.load({
       var setState = stState[1]
       var errState = useState(null)
       var err = errState[0], setErr = errState[1]
+      // 图谱 → 知识页签的跳转载荷：存要展开的页面 id。
+      // 跳转是"切页签 + 展开那一行"两件事，共用一个 state 才不会只做了一半。
+      var focusState = useState(null)
+      var focusId = focusState[0], setFocusId = focusState[1]
+      var onInspect = useCallback(function (id) {
+        setFocusId(id)
+        setTab('knowledge')
+      }, [setTab])
 
       var load = useCallback(function () {
         // 受控模式不发请求：离线渲染里没有 fetch，也不该去打扰真实端点。
@@ -1904,7 +2208,8 @@ window.__ModuleLoader__.load({
               ? h('div', { className: 'lw-empty' }, '读取中…')
               : tab === 'capabilities'
                 ? h(CapabilitiesTab, { state: state, onChanged: load, initialSeg: props.initialSeg })
-                : tab === 'knowledge' ? h(KnowledgeTab, { state: state, onChanged: load })
+                : tab === 'knowledge' ? h(KnowledgeTab, { state: state, onChanged: load, focusId: focusId })
+                  : tab === 'graph' ? h(GraphTab, { state: state, onChanged: load, onInspect: onInspect })
                   : tab === 'triage' ? h(TriageTab, { onChanged: load })
                     : tab === 'models' ? h(ModelsTab, { state: state, onChanged: load })
                       : h(SupplyTab, { state: state, onChanged: load })
@@ -2656,7 +2961,7 @@ window.__ModuleLoader__.load({
       CapabilitiesTab, ToolsSection, SkillsSection,
       KnowledgeTab, SupplyTab, PageDetail,
       ModelsTab, ModelListEditor, HarvestSection,
-      RecallCard,
+      RecallCard, GraphTab,
     }
 
     /**
@@ -2668,6 +2973,8 @@ window.__ModuleLoader__.load({
       // 卡片的**判据**单独交出：给一段真实的工具结果，卡片该说什么 —— 这是可以
       // 逐条钉死的纯函数，而"卡片好不好看"不该混进测试里。
       recallCardModel, recallCallOf, recallResultText,
+      // 图谱的视觉判据也交出去：半径/标签取舍/边的档位都能离线穷举。
+      graphNodeRadius, graphLabelWorthy, graphLabelCut, graphEdgeStyle,
     }
 
     /**

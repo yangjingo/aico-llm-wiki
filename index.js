@@ -38,6 +38,7 @@ import { createSkillInventory, scopeKeyOf } from './lib/skills.js'
 import { createHindsightCompactor } from './lib/hindsight-compact.js'
 import { createPreStepOrder } from './lib/pre-step-order.js'
 import { registerTools } from './lib/tools.js'
+import { buildGraph, graphLayout } from './lib/graph.js'
 
 export const name = 'dsh-learn-wiki'
 export const inject = ['tools', 'llm', 'web', 'webServer']
@@ -448,6 +449,25 @@ let compactVerityLogged = false
           return
         }
 
+        // ── 读路径 3.5：知识图谱（节点 + 边）──
+        //
+        // 刻意不并进 /api/state：建图要遍历全部页面与共现账本，而 state
+        // 每 8 秒被轮询一次。图谱页签打开时才取这一条，取一次画一次。
+        // 节点不带正文（与 /api/page 同一取舍：列表轻、正文按需取）。
+        if (url.pathname === '/learn-wiki/api/graph' && req.method === 'GET') {
+          const { pages } = await loadPages(cfg.wikiRoot)
+          const usage = await loadUsage(cfg.wikiRoot)
+          const maxEdges = Number(url.searchParams.get('maxEdges')) || 300
+          const g = buildGraph(pages, usage, { maxEdges })
+          // 布局在服务端算（graphLayout 是确定性的纯函数）：客户端零力导向
+          // 代码，同一份数据在任何端画出的图都一致，也便于离线断言坐标。
+          const lay = graphLayout(g)
+          const pos = new Map(lay.nodes.map(n => [n.id, n]))
+          for (const n of g.nodes) { n.x = pos.get(n.id)?.x ?? 0; n.y = pos.get(n.id)?.y ?? 0 }
+          send(200, { ok: true, ts: new Date().toISOString(), width: lay.width, height: lay.height, ...g })
+          return
+        }
+
         // ── 读路径 4：待办计数（**轻量**，供常驻界面轮询）──
         //
         // 为什么不复用 /api/state：那条路径会把整个知识库（pages/ 全部正文）、
@@ -792,7 +812,7 @@ let compactVerityLogged = false
     // 覆盖清单**手写**在这里，所以它会随着加端点而过时 —— 实测就过时过一次
     // （加了 models/llm/harvest 之后这行还在报旧的六条）。日志说假话比不写更糟，
     // 所以清单与路由放在一起，加路由时顺手改。
-    log('ui: /learn-wiki 已注册（prefix，覆盖 api/state|page|commit|capabilities|pending|triage|models|llm|harvest）')
+    log('ui: /learn-wiki 已注册（prefix，覆盖 api/state|page|graph|commit|capabilities|pending|triage|models|llm|harvest）')
     return () => { try { dispose() } catch {} }
   }, 'dsh-learn-wiki: ui route')
 
