@@ -174,8 +174,8 @@ window.__ModuleLoader__.load({
       '.lw-kpi{flex:1;min-width:96px;background:var(--lw-raise);border:1px solid var(--lw-line-soft);',
       'border-radius:12px;padding:10px 14px}',
       '.lw-kpi-n{font-family:\'JetBrains Mono\',\'Noto Sans SC\',ui-monospace,monospace;font-size:26px;',
-      'font-weight:700;color:var(--lw-brand);line-height:1.1}',
-      '.lw-kpi-n.b{color:#1565c0}.lw-kpi-n.g{color:#566472}',
+      'font-weight:700;color:var(--lw-fg);line-height:1.1;display:flex;align-items:center;gap:7px}',
+      '.lw-kpi-n.r{color:var(--lw-brand)}',
       '.lw-kpi-l{font-size:12px;color:var(--lw-fg2);margin-top:3px}',
       // 窄面板（模态/分屏）：目录塌成横条，红高亮移到底边。
       '@media (max-width:760px){.lw-work{flex-direction:column}',
@@ -2143,11 +2143,11 @@ window.__ModuleLoader__.load({
 
     // ── 外壳 ──────────────────────────────────────────────────────────────
     var TABS = [
-      { id: 'capabilities', label: '能力' },
-      { id: 'knowledge', label: '知识' },
       { id: 'graph', label: '图谱' },
+      { id: 'knowledge', label: '知识' },
       { id: 'triage', label: '分拣' },
       { id: 'supply', label: '补料' },
+      { id: 'capabilities', label: '能力' },
       { id: 'models', label: '模型' },
     ]
 
@@ -2198,11 +2198,11 @@ window.__ModuleLoader__.load({
     // 骨架 = 设计稿 B（左目录、红高亮、mono 编号）+ A（观点句大标题、
     // KPI 红大数字 + 黑小单位）。全部纯函数，离线可断言。
 
-    /** 目录分组：导航项仍取 TABS 的 id/label，分组只是展示层。 */
+    /** 目录分组：导航项仍取 TABS 的 id/label，分组只是展示层。
+     *  图谱是首页（用户指定）：KNOWLEDGE 组以图谱打头。 */
     var NAVGROUPS = [
-      { grp: 'OVERVIEW', ids: ['capabilities'] },
-      { grp: 'KNOWLEDGE', ids: ['knowledge', 'graph', 'triage'] },
-      { grp: 'OPERATION', ids: ['supply', 'models'] },
+      { grp: 'KNOWLEDGE', ids: ['graph', 'knowledge', 'triage'] },
+      { grp: 'OPERATION', ids: ['supply', 'capabilities', 'models'] },
     ]
 
     /** 导航徽标：只给「有待办」的页——数字说有事，导航就该带计数。 */
@@ -2255,17 +2255,22 @@ window.__ModuleLoader__.load({
       return [{ t: 'aico-wiki' }]
     }
 
-    /** KPI 数字带条目：红=重点（已固化/暂存），蓝=点睛（已确认），灰蓝=次要。 */
+    /** KPI 数字带条目：**复用原 repo 的状态设计**（CLS 表 + StateDot）。
+     *  每项带 {n, label, state}——state 直接喂 Dot()，与知识页签里
+     *  同一状态的点/字色完全一致：一个状态在任何视图里长得一样。 */
     function kpiItems(s) {
       var k = (s && s.knowledge) || {}
-      var committed = k.committed || []
+      var counts = k.counts || {}
+      var committed = (k.committed || []).length
+      // 未确认按 KFILTERS 语义并入新页；疑似有害与观察中并成「有反证」
+      // （warn 点）——KPI 带要的是「该关注什么」，细分档位留给知识页签。
       return [
-        { n: committed.length, cls: '', label: '已固化' },
-        { n: (k.staged || []).length, cls: '', label: '待固化' },
-        { n: committed.reduce(function (n, p) { return n + num0(p.hits) }, 0), cls: 'b', label: '累计命中' },
-        { n: committed.reduce(function (n, p) { return n + num0(p.confirmed) }, 0), cls: 'b', label: '已确认' },
-        { n: num0(s && s.gaps && s.gaps.total), cls: 'g', label: '检索缺口' },
-        { n: committed.reduce(function (n, p) { return n + num0(p.suspect) }, 0), cls: 'g', label: '嫌疑' },
+        { n: committed, label: '已固化', state: null, numCls: 'r' },
+        { n: (k.staged || []).length, label: '待固化', state: null, numCls: 'r' },
+        { n: num0(counts.confirmed), label: CLS.confirmed.label, state: CLS.confirmed.state, numCls: '' },
+        { n: num0(counts.unconfirmed) + num0(counts.new), label: CLS.unconfirmed.label, state: CLS.unconfirmed.state, numCls: '' },
+        { n: num0(counts.suspect) + num0(counts['suspect-watch']), label: '有反证', state: 'error', numCls: '' },
+        { n: num0(counts.dead), label: CLS.dead.label, state: CLS.dead.state, numCls: '' },
       ]
     }
 
@@ -2273,7 +2278,7 @@ window.__ModuleLoader__.load({
       // 受控模式：调用方直接给 state（离线渲染与截图用）。
       // 不给就照旧自己拉 —— 那条路径才是桌面里真正跑的。
       var controlled = !!(props && props.state)
-      var tabState = useState((props && props.initialTab) || 'capabilities')
+      var tabState = useState((props && props.initialTab) || 'graph')
       var tab = tabState[0], setTab = tabState[1]
       var stState = useState(controlled ? props.state : null)
       var state = controlled ? props.state : stState[0]
@@ -2370,7 +2375,9 @@ window.__ModuleLoader__.load({
             state ? h('div', { className: 'lw-kpirow' },
               kpiItems(state).map(function (it, i) {
                 return h('div', { key: i, className: 'lw-kpi' },
-                  h('div', { className: 'lw-kpi-n ' + (it.cls || '') }, num(it.n)),
+                  h('div', { className: 'lw-kpi-n ' + (it.numCls || '') },
+                    it.state ? h(Dot, { state: it.state }) : null,
+                    h('span', null, num(it.n))),
                   h('div', { className: 'lw-kpi-l' }, it.label))
               })
             ) : null,
@@ -3094,7 +3101,7 @@ window.__ModuleLoader__.load({
      *  agent 侧工具（wiki_recall 等）注册在宿主进程，不受 UI 接管影响。 */
     function AicoWikiCenter(props) {
       ensureStyle()
-      var entryTab = (typeof props.entryTab === 'function' ? props.entryTab() : props.entryTab) || 'knowledge'
+      var entryTab = (typeof props.entryTab === 'function' ? props.entryTab() : props.entryTab) || 'graph'
       // Esc 退出：全屏接管后宿主的返回路径（侧栏切换）被盖住，键盘必须有独立退路。
       // SSR/离线渲染没有 document，静默跳过。
       useEffect(function () {
@@ -3241,7 +3248,7 @@ window.__ModuleLoader__.load({
 
       var panelActive = false
       var panelListeners = []
-      var entryTab = 'knowledge'   // 命令选中的页签；激活前设置、面板初始化时读取
+      var entryTab = 'graph'   // 命令选中的页签；激活前设置、面板初始化时读取（首页=图谱）
       var panelNotify = function () { for (var i = 0; i < panelListeners.length; i++) { try { panelListeners[i]() } catch (e) {} } }
       var actionInjected = {
         isActive: function () { return panelActive },

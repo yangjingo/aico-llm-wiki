@@ -1,10 +1,17 @@
 # Spec 06 · 二级界面重绘（华为红体系 · 目录导航骨架）
 
 Date: 2026-10-22
-Status: **Accepted / Implemented**（v0.5.0）
+Status: **Accepted / Implemented**（v0.5.0；同日修订见文末）
 Input: 用户指示「基于 spec 的 design 配色，重置绘制插件的二级界面」。
-三版设计稿（A 胶片式 / B 目录导航 / C 页签精修）供选后，按 spec 05 配色落地
+三版设计稿（A 胶片式 / B 目录导航 / C 页签精稿）供选后，按 spec 05 配色落地
 **B+A 混合骨架**（B 的目录导航 + A 的观点句标题与 KPI 数字带）。
+
+> **修订（2026-10-22，用户反馈）**：① 用户确认喜欢 B 方式；② **首页改为知识图谱**
+> ——TABS/导航以 graph 打头（KNOWLEDGE: 图谱/知识/分拣；OPERATION: 补料/能力/模型，
+> 取消 OVERVIEW 组），PanelBody 与 AicoWikiCenter 默认页签、命令默认 entryTab 均为 graph；
+> ③ **KPI 状态带复用原 repo 的状态设计**——直接采用 CLS 表（label + StateDot state +
+> c-类），条目=已固化/待固化/已确认/未确认（并入新页，KFILTERS 语义）/有反证
+> （疑似有害+观察中合并，error 点）/死知识；一个状态在任何视图里长得一样。
 
 ## 骨架（替换原横向页签条）
 
