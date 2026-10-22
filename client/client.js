@@ -149,6 +149,40 @@ window.__ModuleLoader__.load({
       'max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:rtl;text-align:left}',
       '.lw-tabs{display:flex;align-items:center;gap:6px;padding:0 0 10px;border-bottom:1px solid var(--lw-line-soft);flex-wrap:wrap}',
       '.lw-tabsum{margin-left:auto;font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg3);font-variant-numeric:tabular-nums}',
+      // ── 二级界面骨架（spec 05 重绘）：左目录 + 右内容 ──
+      '.lw-work{display:flex;flex:1;min-height:0}',
+      '.lw-nav{width:212px;flex:none;border-right:1px solid var(--lw-line-soft);padding:6px 0 12px;overflow:auto}',
+      '.lw-nav-grp{font-family:\'JetBrains Mono\',\'Noto Sans SC\',ui-monospace,monospace;font-size:11px;',
+      'letter-spacing:.18em;color:var(--lw-fg4);padding:14px 18px 6px}',
+      '.lw-nav-item{display:flex;align-items:center;gap:10px;width:100%;padding:10px 16px 10px 15px;border:0;',
+      'border-left:3px solid transparent;background:none;cursor:pointer;font:inherit;font-size:14px;',
+      'color:var(--lw-fg2);text-align:left}',
+      '.lw-nav-item:hover{background:var(--lw-hover)}',
+      '.lw-nav-item:focus-visible{outline:2px solid var(--lw-brand);outline-offset:-2px}',
+      '.lw-nav-item.cur{color:var(--lw-fg);font-weight:600;border-left-color:var(--lw-brand);background:#fdf0f1}',
+      '.lw-nav-n{font-family:\'JetBrains Mono\',\'Noto Sans SC\',ui-monospace,monospace;font-size:12px;color:var(--lw-fg4);width:20px;flex:none}',
+      '.lw-nav-item.cur .lw-nav-n{color:var(--lw-brand)}',
+      '.lw-nav-l{flex:1;min-width:0}',
+      '.lw-nav-badge{font-family:\'JetBrains Mono\',\'Noto Sans SC\',ui-monospace,monospace;font-size:11px;',
+      'background:#fdf0f1;color:var(--lw-brand);border-radius:99px;padding:1px 8px;flex:none}',
+      '.lw-main{flex:1;min-width:0;display:flex;flex-direction:column;padding:2px 0 0 20px}',
+      '.lw-crumb{font-size:12px;color:var(--lw-fg4);margin-bottom:10px}',
+      '.lw-crumb b{color:var(--lw-brand);font-weight:600}',
+      '.lw-h3{margin:0 0 4px;font:600 24px/1.35 \'Noto Sans SC\',sans-serif;color:var(--lw-fg)}',
+      '.lw-h3 .r{color:var(--lw-brand)}',
+      '.lw-kpirow{display:flex;gap:12px;margin:14px 0 18px;flex-wrap:wrap}',
+      '.lw-kpi{flex:1;min-width:96px;background:var(--lw-raise);border:1px solid var(--lw-line-soft);',
+      'border-radius:12px;padding:10px 14px}',
+      '.lw-kpi-n{font-family:\'JetBrains Mono\',\'Noto Sans SC\',ui-monospace,monospace;font-size:26px;',
+      'font-weight:700;color:var(--lw-brand);line-height:1.1}',
+      '.lw-kpi-n.b{color:#1565c0}.lw-kpi-n.g{color:#566472}',
+      '.lw-kpi-l{font-size:12px;color:var(--lw-fg2);margin-top:3px}',
+      // 窄面板（模态/分屏）：目录塌成横条，红高亮移到底边。
+      '@media (max-width:760px){.lw-work{flex-direction:column}',
+      '.lw-nav{width:auto;display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--lw-line-soft)}',
+      '.lw-nav-grpwrap{display:flex;align-items:center}.lw-nav-grp{display:none}',
+      '.lw-nav-item{width:auto;white-space:nowrap;border-left:0;border-bottom:3px solid transparent}',
+      '.lw-nav-item.cur{border-bottom-color:var(--lw-brand)}}',
       '.lw-body{flex:1;min-height:0;overflow:auto;padding:12px 0 18px}',
       // 页签之下的第二级导航（能力页签里的 工具/技能）。
       // 用一条浅底把两段"焊"在一起，跟顶部页签一眼可分——否则两级导航长得一样，
@@ -2159,6 +2193,82 @@ window.__ModuleLoader__.load({
       return ''
     }
 
+    // ── 二级界面（spec 05 重绘）：目录导航 + 观点句标题 + KPI 数字带 ──────
+    //
+    // 骨架 = 设计稿 B（左目录、红高亮、mono 编号）+ A（观点句大标题、
+    // KPI 红大数字 + 黑小单位）。全部纯函数，离线可断言。
+
+    /** 目录分组：导航项仍取 TABS 的 id/label，分组只是展示层。 */
+    var NAVGROUPS = [
+      { grp: 'OVERVIEW', ids: ['capabilities'] },
+      { grp: 'KNOWLEDGE', ids: ['knowledge', 'graph', 'triage'] },
+      { grp: 'OPERATION', ids: ['supply', 'models'] },
+    ]
+
+    /** 导航徽标：只给「有待办」的页——数字说有事，导航就该带计数。 */
+    function navBadge(tab, s) {
+      if (!s) return 0
+      if (tab === 'knowledge') return ((s.knowledge && s.knowledge.staged) || []).length
+      if (tab === 'triage') { var tr = s.triage || {}; return num0(tr.trash) + num0(tr.rejected) }
+      if (tab === 'supply') return num0(s.gaps && s.gaps.total)
+      return 0
+    }
+    function num0(v) { return (v === undefined || v === null) ? 0 : Number(v) || 0 }
+
+    /** 观点句标题（huawei-style 句式：判断句 + 数字红黑混排）。
+     *  返回段数组 [{t,red}]，渲染时红段着色——数字必大必变色。 */
+    function titleParts(tab, s) {
+      var k = (s && s.knowledge) || {}
+      var c = (k.committed || []).length, st = (k.staged || []).length
+      var hits = (k.committed || []).reduce(function (n, p) { return n + num0(p.hits) }, 0)
+      var conf = (k.committed || []).reduce(function (n, p) { return n + num0(p.confirmed) }, 0)
+      if (tab === 'capabilities') {
+        var t = (s && s.capabilities && s.capabilities.totals) || {}
+        var sk = (s && s.skills && s.skills.totals) || {}
+        return [{ t: '常驻成本已量化：' }, { t: num0(t.kept) + '/' + num0(t.total), red: true },
+          { t: ' 个工具 · ' + num0(t.keptTokens) + ' token · ' + num0(sk.count) + ' 个技能' }]
+      }
+      if (tab === 'knowledge') {
+        return [{ t: '知识库已沉淀 ' }, { t: c, red: true }, { t: ' 条知识，' },
+          { t: st, red: st > 0 }, { t: ' 条待固化，全部可溯源' }]
+      }
+      if (tab === 'graph') {
+        return [{ t: '知识结构可视化：' }, { t: c, red: true }, { t: ' 页入图，' },
+          { t: hits, red: false }, { t: ' 次累计命中驱动节点大小' }]
+      }
+      if (tab === 'triage') {
+        var tr = (s && s.triage) || {}
+        return [{ t: '回收站与拒绝区：' }, { t: num0(tr.trash) + num0(tr.rejected), red: true }, { t: ' 条待分拣' }]
+      }
+      if (tab === 'supply') {
+        var g = (s && s.gaps) || {}
+        var sg = (s && s.struggles) || {}
+        return [{ t: '学习回路运行中：' }, { t: num0(g.total), red: true },
+          { t: ' 个缺口 · ' + num0(sg.total) + ' 条挣扎信号' }]
+      }
+      if (tab === 'models') {
+        var lm = (s && s.llm) || {}
+        return [{ t: '模型路由 ' }, { t: lm.mode === 'rotate' ? '轮换' : '单一', red: true },
+          { t: '：' + num0((lm.models || []).length) + ' 个候选' }]
+      }
+      // 未知页签：中性兜底，不给可能出错的数字。
+      return [{ t: 'aico-wiki' }]
+    }
+
+    /** KPI 数字带条目：红=重点（已固化/暂存），蓝=点睛（已确认），灰蓝=次要。 */
+    function kpiItems(s) {
+      var k = (s && s.knowledge) || {}
+      var committed = k.committed || []
+      return [
+        { n: committed.length, cls: '', label: '已固化' },
+        { n: (k.staged || []).length, cls: '', label: '待固化' },
+        { n: committed.reduce(function (n, p) { return n + num0(p.hits) }, 0), cls: 'b', label: '累计命中' },
+        { n: committed.reduce(function (n, p) { return n + num0(p.confirmed) }, 0), cls: 'b', label: '已确认' },
+        { n: num0(s && s.gaps && s.gaps.total), cls: 'g', label: '检索缺口' },
+        { n: committed.reduce(function (n, p) { return n + num0(p.suspect) }, 0), cls: 'g', label: '嫌疑' },
+      ]
+    }
+
     function PanelBody(props) {
       // 受控模式：调用方直接给 state（离线渲染与截图用）。
       // 不给就照旧自己拉 —— 那条路径才是桌面里真正跑的。
@@ -2200,6 +2310,26 @@ window.__ModuleLoader__.load({
         return function () { clearInterval(t) }
       }, [load, controlled])
 
+      // ── 二级界面骨架（spec 05 重绘）：左目录 + 右内容（观点句 + KPI 带 + 页签体）──
+      var navItem = function (t) {
+        var badge = navBadge(t.id, state)
+        return h('button', {
+          key: t.id,
+          type: 'button',
+          className: 'lw-nav-item' + (tab === t.id ? ' cur' : ''),
+          role: 'tab',
+          'aria-selected': tab === t.id,
+          tabIndex: tab === t.id ? 0 : -1,
+          onClick: function () { setTab(t.id) },
+        },
+          h('span', { className: 'lw-nav-n' }, t.no),
+          h('span', { className: 'lw-nav-l' }, t.label),
+          badge > 0 ? h('span', { className: 'lw-nav-badge' }, num(badge)) : null
+        )
+      }
+      var tabNo = {}
+      for (var ti = 0; ti < TABS.length; ti++) tabNo[TABS[ti].id] = ('0' + (ti + 1)).slice(-2)
+
       return h('div', { className: 'lw-shell' },
         h('div', { className: 'lw-head' },
           h('span', { className: 'lw-headicon' }, Ico('IconSkillOutline16', 16)),
@@ -2211,35 +2341,53 @@ window.__ModuleLoader__.load({
             title: (state && state.app && state.app.wikiRoot) || '',
           }, (state && state.app && state.app.wikiRoot) || (state ? '（没有 wikiRoot）' : '连接中…'))
         ),
-        h('div', {
-          className: 'lw-tabs',
-          role: 'tablist',
-          'aria-label': 'aico-wiki 页签',
-          onKeyDown: tabKeys(TABS.map(function (t) { return t.id }), tab, setTab),
-        },
-          TABS.map(function (t) {
-            return h(Chip, {
-              key: t.id,
-              active: tab === t.id,
-              onClick: function () { setTab(t.id) },
-              role: 'tab',
-              'aria-selected': tab === t.id,
-            }, t.label)
-          }),
-          h('span', { className: 'lw-tabsum' }, tabsSummary(tab, state))
-        ),
-        h('div', { className: 'lw-body lw-scroll' },
-          err
-            ? h('div', { className: 'lw-msg err' }, '读不到状态：' + err + '　（/aico-local-wiki/api/state）')
-            : !state
-              ? h('div', { className: 'lw-empty' }, '读取中…')
-              : tab === 'capabilities'
-                ? h(CapabilitiesTab, { state: state, onChanged: load, initialSeg: props.initialSeg })
-                : tab === 'knowledge' ? h(KnowledgeTab, { state: state, onChanged: load, focusId: focusId })
-                  : tab === 'graph' ? h(GraphTab, { state: state, onChanged: load, onInspect: onInspect })
-                              : tab === 'triage' ? h(TriageTab, { onChanged: load })
-                    : tab === 'models' ? h(ModelsTab, { state: state, onChanged: load })
-                      : h(SupplyTab, { state: state, onChanged: load })
+        h('div', { className: 'lw-work' },
+          h('nav', {
+            className: 'lw-nav',
+            'aria-label': 'aico-wiki 导航',
+            onKeyDown: tabKeys(TABS.map(function (t) { return t.id }), tab, setTab),
+          },
+            NAVGROUPS.map(function (g) {
+              return h('div', { key: g.grp, className: 'lw-nav-grpwrap' },
+                h('div', { className: 'lw-nav-grp' }, g.grp),
+                g.ids.map(function (id) {
+                  var t = TABS.filter(function (x) { return x.id === id })[0]
+                  return t ? navItem({ id: t.id, label: t.label, no: tabNo[t.id] }) : null
+                })
+              )
+            })
+          ),
+          h('div', { className: 'lw-main' },
+            // 面包屑：导航分组 / 当前页（观点句标题已承担「这页说什么」，
+            // 面包屑只负责「我在哪」——长导航里的定位三件套之一）。
+            h('div', { className: 'lw-crumb' },
+              (NAVGROUPS.filter(function (g) { return g.ids.indexOf(tab) >= 0 })[0] || {}).grp,
+              ' / ', h('b', null, (TABS.filter(function (x) { return x.id === tab })[0] || {}).label)),
+            h('h3', { className: 'lw-h3' },
+              titleParts(tab, state).map(function (p, i) {
+                return h('span', { key: i, className: p.red ? 'r' : undefined }, p.t)
+              })),
+            state ? h('div', { className: 'lw-kpirow' },
+              kpiItems(state).map(function (it, i) {
+                return h('div', { key: i, className: 'lw-kpi' },
+                  h('div', { className: 'lw-kpi-n ' + (it.cls || '') }, num(it.n)),
+                  h('div', { className: 'lw-kpi-l' }, it.label))
+              })
+            ) : null,
+            h('div', { className: 'lw-body lw-scroll' },
+              err
+                ? h('div', { className: 'lw-msg err' }, '读不到状态：' + err + '　（/aico-local-wiki/api/state）')
+                : !state
+                  ? h('div', { className: 'lw-empty' }, '读取中…')
+                  : tab === 'capabilities'
+                    ? h(CapabilitiesTab, { state: state, onChanged: load, initialSeg: props.initialSeg })
+                    : tab === 'knowledge' ? h(KnowledgeTab, { state: state, onChanged: load, focusId: focusId })
+                      : tab === 'graph' ? h(GraphTab, { state: state, onChanged: load, onInspect: onInspect })
+                        : tab === 'triage' ? h(TriageTab, { onChanged: load })
+                          : tab === 'models' ? h(ModelsTab, { state: state, onChanged: load })
+                            : h(SupplyTab, { state: state, onChanged: load })
+            )
+          )
         )
       )
     }
@@ -3231,6 +3379,8 @@ window.__ModuleLoader__.load({
       recallCardModel, recallCallOf, recallResultText,
       // 图谱的视觉判据也交出去：半径/标签取舍/边的档位都能离线穷举。
       graphNodeRadius, graphLabelWorthy, graphLabelCut, graphEdgeStyle,
+      // 二级界面（spec 05 重绘）的判据：观点句分段 / KPI 条目 / 导航徽标。
+      titleParts, kpiItems, navBadge, NAVGROUPS,
     }
 
     /**
