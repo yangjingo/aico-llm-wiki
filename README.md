@@ -1,6 +1,6 @@
 # aico-local-wiki
 
-> aiCo 的本地 wiki 插件。fork 自 [Dayi-Z/dsh-learn-wiki](https://github.com/Dayi-Z/dsh-learn-wiki)（v0.3.1，`1d20bd5`），在此基线上继续开发。源码位置：`D:\myCode\agent\aiCo\aico-local-wiki`，以 `link:` 方式安装在 DSH web profile。
+> aiCo 的本地 wiki 插件。fork 自 [Dayi-Z/dsh-learn-wiki](https://github.com/Dayi-Z/dsh-learn-wiki)（v0.3.1，`1d20bd5`），在此基线上继续开发。源码位置：`D:\myCode\agent\aiCo\aico-local-wiki`，以 `link:` 方式安装在 DSH **desktop** profile（⚠️ 桌面宿主用的是 desktop profile，不是 web）。
 
 DSH 的「边做边学」知识库插件：**工作前自动检索 → 卡住时后台限流联网补料 → 蒸馏落暂存 → 两段式 commit 升入知识库 → 下次自动命中**。
 
@@ -9,6 +9,17 @@ DSH 的「边做边学」知识库插件：**工作前自动检索 → 卡住时
 ## aiCo 的改动（相对上游）
 
 - **图谱页签**：莫兰迪配色 + 酒红画底的知识图谱（节点=页面，实线=共召回 co，虚线=共享标签 tag），点选联动抽屉/固化/知识页签跳转（`lib/graph.js` + `/aico-local-wiki/api/graph`）
+- **收编更名**：v0.4.0 起为 aiCo 自有插件（详见 [docs/spec/](docs/spec/)）
+
+## 文档导航（docs/，对齐 aida-lld 规范）
+
+- [docs/design.md](docs/design.md) — aiCo 增量的架构与决策表
+- [docs/test-cases.md](docs/test-cases.md) — TC-* 与 `verify:graph` 断言映射
+- [docs/integration-report.md](docs/integration-report.md) — 安装门禁、事故记录（装错 profile 根因）、重启验证清单
+- [docs/spec/](docs/spec/) — 历次用户确认的 spec：01 图谱方案、02 视觉风格、03 收编更名
+- [docs/evidence/](docs/evidence/) — 截图与同源 HTML 证据
+- [docs/verification/](docs/verification/) — verify 运行产物（JSON）
+- 上游 spec 原样保留：本 README 下文、[PRODUCT.md](PRODUCT.md)、[CHANGELOG.md](CHANGELOG.md)
 
 ## 它解决什么问题
 
