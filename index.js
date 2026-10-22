@@ -467,7 +467,6 @@ let compactVerityLogged = false
           send(200, { ok: true, ts: new Date().toISOString(), width: lay.width, height: lay.height, ...g })
           return
         }
-
         // ── 读路径 4：待办计数（**轻量**，供常驻界面轮询）──
         //
         // 为什么不复用 /api/state：那条路径会把整个知识库（pages/ 全部正文）、

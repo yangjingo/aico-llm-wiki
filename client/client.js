@@ -442,6 +442,17 @@ window.__ModuleLoader__.load({
       '.lw-graph-drawer h4{margin:0;font:var(--dsw-font-s-strong-14,600 14px/22px system-ui,sans-serif)}',
       '.lw-graph-drawer .lw-graph-meta{font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg3);display:flex;flex-wrap:wrap;gap:4px 10px}',
       '.lw-graph-empty{padding:40px 0;text-align:center;color:var(--lw-fg3)}',
+            'border:1px solid var(--lw-line);font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg2)}',
+      'display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}',
+      // ── 主面板接管（keyed main，同 aida-lld 形式）──
+      '.lw-center{display:flex;flex-direction:column;width:100%;height:100%;min-height:0;',
+      'padding:16px 18px 0;box-sizing:border-box}',
+      // ── 插件页卡片（plugins.item / plugins.detail.section）──
+      '.lw-plug-card{display:flex;align-items:center;gap:12px;padding:14px 16px;',
+      'border:1px solid var(--lw-line);border-radius:12px;background:var(--lw-raise)}',
+      '.lw-plug-card--stack{flex-direction:column;align-items:stretch;gap:12px}',
+      '.lw-plug-title{font:var(--dsw-font-s-strong-14,600 14px/22px system-ui,sans-serif)}',
+      '.lw-plug-note{margin:2px 0 0;font:var(--dsw-font-xxs-12,12px/18px system-ui,sans-serif);color:var(--lw-fg2)}',
     ].join('')
 
     var styled = false
@@ -2222,7 +2233,7 @@ window.__ModuleLoader__.load({
                 ? h(CapabilitiesTab, { state: state, onChanged: load, initialSeg: props.initialSeg })
                 : tab === 'knowledge' ? h(KnowledgeTab, { state: state, onChanged: load, focusId: focusId })
                   : tab === 'graph' ? h(GraphTab, { state: state, onChanged: load, onInspect: onInspect })
-                  : tab === 'triage' ? h(TriageTab, { onChanged: load })
+                              : tab === 'triage' ? h(TriageTab, { onChanged: load })
                     : tab === 'models' ? h(ModelsTab, { state: state, onChanged: load })
                       : h(SupplyTab, { state: state, onChanged: load })
         )
@@ -2899,9 +2910,114 @@ window.__ModuleLoader__.load({
           : null
       )
     }
+    /* ── 主面板接管与插件页入口（对齐 aida-lld 的 0.2.0 形式）─────────────
+     *
+     * 三个入口、同一个 main 面板：
+     *   1. composer 命令 aico-wiki（popupSelect 选页签直达）；
+     *   2. 「插件」页独立卡片（plugins.item）+ 本插件详情页区块（plugins.detail.section）；
+     *   3. 原有侧栏 learn-wiki→aico-wiki 入口（模态面板，保留为后备）。
+     * main 面板注册一次、常驻：开/关只切 layout.selectPanel，绝不注销注册
+     * （同 key 重复注册在 dispose 后不被宿主重新接纳——aida-lld 踩过：
+     * 「首次可开、关闭后再开无效」）。
+     */
+
+    /** wiki 图标：书页 + 连线节点（stroke 1.5，currentColor）。 */
+    function WikiIcon(size) {
+      var s = size || 16
+      return h('svg', { viewBox: '0 0 16 16', width: s, height: s, 'aria-hidden': true, focusable: 'false' },
+        h('g', { fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round' },
+          h('path', { d: 'M2.5 3.5c2-1 4-1 5.5.5 1.5-1.5 3.5-1.5 5.5-.5v9c-2-1-4-1-5.5.5-1.5-1.5-3.5-1.5-5.5-.5z' }),
+          h('path', { d: 'M8 4v9.5' })
+        ),
+        h('g', { fill: 'currentColor', stroke: 'none' },
+          h('circle', { cx: 8, cy: 8, r: 1.2 }),
+          h('circle', { cx: 12.5, cy: 6, r: 1.2 }),
+          h('circle', { cx: 12.5, cy: 10.5, r: 1.2 })
+        )
+      )
+    }
+
+    /** 主面板内容：占满中央区（保留侧栏），头部带关闭。
+     *  注入面（宿主平铺为 props）：close()、entryTab()（命令选中的页签）。 */
+    function AicoWikiCenter(props) {
+      ensureStyle()
+      var entryTab = (typeof props.entryTab === 'function' ? props.entryTab() : props.entryTab) || 'knowledge'
+      return h('div', { className: 'lw-center lw-root' },
+        h('div', { className: 'lw-head' },
+          h('span', { className: 'lw-headicon' }, WikiIcon(16)),
+          h('span', { className: 'lw-title' }, 'aico-wiki'),
+          h('span', { className: 'lw-tabsum' }, '本地知识库工作台'),
+          h(Btn, {
+            style: { marginLeft: 'auto' },
+            onClick: function () { props.close && props.close() },
+          }, '关闭工作台')
+        ),
+        // key=entryTab：命令再次选中别的页签时强制重挂载，让 initialTab 生效。
+        // PanelBody 的页签是内部 state，外部换 initialTab 不重挂载就没有效果。
+        h(PanelBody, { key: entryTab, initialTab: entryTab })
+      )
+    }
+
+    /** 本插件自己的 bundle？plugins.* 插槽的 subject 判据。 */
+    function isOwnBundle(subject) {
+      return subject && subject.kind === 'bundle'
+        && subject.pkg && subject.pkg.name === 'aico-local-wiki'
+    }
+
+    /** hook：订阅面板 active 状态（注入面给 isActive/subscribeActive，同 aida-lld）。 */
+    function usePanelActive(props) {
+      var st = useState(!!(props && props.isActive && props.isActive()))
+      var active = st[0], setActive = st[1]
+      useEffect(function () {
+        if (!props || typeof props.subscribeActive !== 'function') return
+        return props.subscribeActive(function () {
+          setActive(!!(props.isActive && props.isActive()))
+        })
+      }, [props.isActive, props.subscribeActive])
+      return active
+    }
+
+    /** plugins.item：summary=插件列表一行；page=点入后的二级页面卡片。 */
+    function AicoPluginItem(props) {
+      ensureStyle()
+      var active = usePanelActive(props)
+      if (props.subject !== undefined && !isOwnBundle(props.subject)) return null
+      if (props.view === 'summary') {
+        return h('span', null, active ? 'aico-wiki 工作台已打开，点开进入' : '本地知识库（知识 / 图谱）· 点开进入工作台')
+      }
+      return h('div', { className: 'lw-plug-card lw-plug-card--stack lw-root' },
+        h('div', { className: 'lw-plug-card' },
+          h('span', { className: 'lw-headicon' }, WikiIcon(20)),
+          h('div', null,
+            h('div', { className: 'lw-plug-title' }, 'aico-wiki · 本地知识库工作台'),
+            h('p', { className: 'lw-plug-note' },
+              '知识沉淀与召回（边干边学）、知识图谱可视化。打开后占满中央区域，侧边栏保持可用。')
+          )
+        ),
+        h('div', null, h(Btn, { className: 'primary', onClick: active ? props.close : props.open },
+          active ? '关闭工作台' : '打开工作台'))
+      )
+    }
+
+    /** plugins.detail.section：本插件详情页正文区块。 */
+    function AicoPluginSection(props) {
+      ensureStyle()
+      var active = usePanelActive(props)
+      if (!isOwnBundle(props.subject)) return null
+      return h('div', { className: 'lw-plug-card lw-root' },
+        h('span', { className: 'lw-headicon' }, WikiIcon(20)),
+        h('div', { style: { flex: 1, minWidth: 0 } },
+          h('div', { className: 'lw-plug-title' }, 'aico-wiki · 本地知识库工作台'),
+          h('p', { className: 'lw-plug-note' }, '知识 / 图谱。composer 输入 aico-wiki 也可直达。')
+        ),
+        h(Btn, { className: 'primary', onClick: active ? props.close : props.open },
+          active ? '关闭' : '打开工作台')
+      )
+    }
+
     // ── 插件契约 ──
     var name = 'aico-local-wiki'
-    var inject = ['slots', 'locale', 'theme']
+    var inject = ['slots', 'locale', 'theme', 'layout']
 
     var ZH = { title: 'aico-wiki', capabilities: '能力', knowledge: '知识', supply: '补料' }
     var EN = { title: 'aico-wiki', capabilities: 'Capabilities', knowledge: 'Knowledge', supply: 'Supply' }
@@ -2952,6 +3068,120 @@ window.__ModuleLoader__.load({
         // 一个附加的提示不该有能力拖垮整个插件。
         try { console.error('[aico-local-wiki] 待办提示条座位不可用：', e) } catch (err) {}
       }
+
+      // ── 主面板接管（keyed main，对齐 aida-lld 的 0.2.0 形式）──
+      //
+      // 注册一次、常驻：开/关只切 layout.selectPanel，绝不注销——
+      // 同 key 重复注册在 dispose 后不被宿主重新接纳（「首次可开、关掉再开无效」）。
+      var AICO_MAIN_PANEL = 'aico-wiki'
+      var AICO_COMMAND = 'aico-wiki'
+      var layout = null
+      try { layout = ctx.get('layout') } catch (e) { /* 宿主没给 layout 服务 */ }
+
+      var panelActive = false
+      var panelListeners = []
+      var entryTab = 'knowledge'   // 命令选中的页签；激活前设置、面板初始化时读取
+      var panelNotify = function () { for (var i = 0; i < panelListeners.length; i++) { try { panelListeners[i]() } catch (e) {} } }
+      var actionInjected = {
+        isActive: function () { return panelActive },
+        subscribeActive: function (cb) {
+          panelListeners.push(cb)
+          return function () {
+            var idx = panelListeners.indexOf(cb)
+            if (idx >= 0) panelListeners.splice(idx, 1)
+          }
+        },
+        open: function () { panelActivate() },
+        close: function () { panelDeactivate() },
+      }
+      var panelActivate = function () {
+        if (panelActive) return
+        panelActive = true
+        try { layout && layout.closeRightbar && layout.closeRightbar() } catch (e) {}
+        try { layout && layout.selectPanel && layout.selectPanel(AICO_MAIN_PANEL) } catch (e) {}
+        panelNotify()
+      }
+      var panelDeactivate = function () {
+        if (!panelActive) return
+        panelActive = false
+        try { layout && layout.selectPanel && layout.selectPanel(null) } catch (e) {}
+        panelNotify()
+      }
+      /** 命令/入口选中某页签：已激活则靠 key 重挂载换页签，未激活则打开。 */
+      var openEntry = function (tab) {
+        entryTab = tab || 'knowledge'
+        panelActivate()
+      }
+
+      try {
+        ctx.slots.register({
+          name: 'main',
+          key: AICO_MAIN_PANEL,
+          inject: function () {
+            return { close: panelDeactivate, entryTab: function () { return entryTab } }
+          },
+        }, AicoWikiCenter)
+      } catch (e) {
+        try { console.error('[aico-local-wiki] main 面板注册失败：', e) } catch (err) {}
+      }
+
+      // 插件页入口 1：官方组之后的独立卡片（点卡片进入本插件的二级页面）。
+      try {
+        ctx.slots.inject('plugins.item', function () {
+          return ctx.slots.register({
+            name: 'plugins.item',
+            id: 'aico-wiki',
+            order: 102,
+            label: 'aico-wiki',
+            inject: function () { return actionInjected },
+          }, AicoPluginItem)
+        })
+      } catch (e) {
+        try { console.error('[aico-local-wiki] plugins.item 座位不可用：', e) } catch (err) {}
+      }
+
+      // 插件页入口 2：本插件详情页正文区块（大号打开按钮）。
+      try {
+        ctx.slots.inject('plugins.detail.section', function () {
+          return ctx.slots.register({
+            name: 'plugins.detail.section',
+            id: 'aico-wiki',
+            order: 100,
+            label: 'aico-wiki',
+            inject: function () { return actionInjected },
+          }, AicoPluginSection)
+        })
+      } catch (e) {
+        try { console.error('[aico-local-wiki] plugins.detail.section 座位不可用：', e) } catch (err) {}
+      }
+
+      // 入口 3：composer 命令 aico-wiki（popupSelect 选页签直达，全程不经模型）。
+      // commandUi 可能没被宿主提供，ctx.inject 拿不到就静默跳过——
+      // 插件页入口还在，命令只是加速器。
+      try {
+        ctx.inject(['commandUi'], function (scope) {
+          var command = scope.get('commandUi')
+          if (!command || typeof command.register !== 'function') return
+          scope.effect(function () {
+            return command.register({
+              name: AICO_COMMAND,
+              label: function () { return 'aico-wiki · 本地知识库工作台' },
+              description: function () { return 'aico-wiki —— 选择页签并直接展开（知识 / 图谱…）' },
+              icon: WikiIcon,
+              available: function () { return true },
+              ui: {
+                kind: 'popupSelect',
+                options: async function () {
+                  return TABS.map(function (t) { return { id: t.id, label: t.label } })
+                },
+                onSelect: async function (option) { openEntry(option && option.id) },
+              },
+            })
+          }, 'aico-local-wiki: aico-wiki command')
+        })
+      } catch (e) {
+        try { console.error('[aico-local-wiki] 命令注册不可用：', e) } catch (err) {}
+      }
     }
 
     exports.name = name
@@ -2974,6 +3204,7 @@ window.__ModuleLoader__.load({
       KnowledgeTab, SupplyTab, PageDetail,
       ModelsTab, ModelListEditor, HarvestSection,
       RecallCard, GraphTab,
+      AicoWikiCenter, AicoPluginItem, AicoPluginSection,
     }
 
     /**

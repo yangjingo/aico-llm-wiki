@@ -596,7 +596,7 @@ console.log('── 底栏入口（座位 sidebar.footer.action 的 wide 契约�
   check('★ wide=false：按钮与单元格都换成轨道类名',
     railHtml.includes('lw-fb-rail') && railHtml.includes('lw-fb-cell-rail'))
   check('★ wide=false：没有可见标签，可及名必须由 aria-label 提供',
-    railHtml.includes('aria-label="learn-wiki"'))
+    railHtml.includes('aria-label="aico-wiki"'))
   check('wide=true：不出现轨道类名',
     !wideHtml.includes('lw-fb-cell-rail') && !wideHtml.includes('"lw-fb lw-fb-rail"'))
   check('不传 props / 传 undefined 都退化为宽态（测试与老调用点依赖这条）',
