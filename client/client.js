@@ -428,7 +428,8 @@ window.__ModuleLoader__.load({
       '.lw-graph-legend{display:flex;align-items:center;gap:10px;font:var(--dsw-font-xxxs-11,11px/16px system-ui,sans-serif);color:var(--lw-fg3);margin-left:auto}',
       '.lw-graph-leg{display:flex;align-items:center;gap:4px;white-space:nowrap}',
       '.lw-graph-swatch{width:9px;height:9px;border-radius:50%;flex:none}',
-      '.lw-graph-svgbox{flex:1;min-height:340px;border:1px solid var(--lw-line-soft);border-radius:10px;overflow:hidden;background:var(--lw-raise);position:relative}',
+      '.lw-graph-svgbox{flex:1;min-height:340px;border:1px solid var(--lw-line-soft);border-radius:10px;overflow:hidden;',
+      'background:#8e5a5f;position:relative}',
       '.lw-graph-svg{display:block;width:100%;height:100%}',
       // 文本节点标签用 SVG text，字体走 token；fill 在 JS 里按状态给。
       '.lw-graph-svg text{font:var(--dsw-font-xxxs-11,10px/14px system-ui,sans-serif);pointer-events:none}',
@@ -1831,12 +1832,20 @@ window.__ModuleLoader__.load({
     // 边只有两种、都可解释：tag（共享标签）与 co（同一次召回共命中）。
     // 这张图要回答的是「我的知识长什么样、哪些总是一起被需要」，
     // 不是「哪些页面文本相似」——后者是检索的事，不该混进结构图里。
+    // 配色（用户指定，2026-10-22）：莫兰迪色系 + 红色画布底色。
+    // 刻意不走 --dsw-* 主题 token——这张图要有自己的性格，跟主题换色反而
+    // 会破坏红底上的对比度。四色都压了灰调（莫兰迪），在酒红底上可分。
     var GCOLOR = {
-      fact: 'var(--lw-brand)',
-      decision: 'var(--lw-warn)',
-      lesson: 'var(--lw-ok)',
-      howto: 'var(--lw-info)',
+      fact: '#7f99ac',      // 雾蓝
+      decision: '#c9a37e',  // 灰杏
+      lesson: '#8fa88b',    // 灰绿
+      howto: '#ab9bab',     // 藕紫
     }
+    var GEDGE = {
+      co: '#e8d3c6',        // 奶油白：在红底上亮且柔
+      tag: 'rgba(58,42,44,.55)', // 暗灰红：虚线，退后
+    }
+    var GBG = '#8e5a5f'     // 莫兰迪酒红：画布底色
 
     /** 纯函数：节点半径。命中越多越大，但封顶——大节点会盖住邻居。 */
     function graphNodeRadius(n) {
@@ -1859,10 +1868,10 @@ window.__ModuleLoader__.load({
     function graphEdgeStyle(e, selId, neighbors) {
       var active = !selId || e.a === selId || e.b === selId
       var w = e.weight || 1
-      var op = w >= 3 ? 0.55 : w >= 2 ? 0.38 : 0.22
-      if (!active) op = 0.06
+      var op = w >= 3 ? 0.95 : w >= 2 ? 0.7 : 0.45
+      if (!active) op = 0.12
       return {
-        stroke: e.type === 'co' ? 'var(--lw-brand)' : 'var(--lw-fg3)',
+        stroke: e.type === 'co' ? GEDGE.co : GEDGE.tag,
         opacity: op,
         dash: e.type === 'co' ? undefined : '3 3',
         // co 边在 tag 边之上：一起被需要是更强的结构性信号
@@ -2013,7 +2022,9 @@ window.__ModuleLoader__.load({
                 nodes.map(function (n) {
                   var r = graphNodeRadius(n)
                   var dimmed = !!sel && n.id !== sel && !neighbors[n.id]
-                  var fill = n.quarantined ? 'var(--lw-bad)' : (GCOLOR[n.category] || GCOLOR.fact)
+                  // 隔离页不用警示红（红底上会隐身），用深灰紫压暗——
+                  // 抽屉和 title 里的「已隔离」仍会说明原因。
+                  var fill = n.quarantined ? '#4d4348' : (GCOLOR[n.category] || GCOLOR.fact)
                   return h('g', {
                     key: n.id,
                     className: 'lw-gnode',
@@ -2028,10 +2039,11 @@ window.__ModuleLoader__.load({
                   },
                     h('circle', {
                       r: r,
-                    fill: fill,
-                      opacity: dimmed ? 0.18 : (n.status === 'staged' ? 0.55 : 0.9),
-                      stroke: n.id === sel ? 'var(--lw-fg)' : 'var(--lw-surface)',
-                      strokeWidth: n.id === sel ? 2.5 : 1,
+                      fill: fill,
+                      opacity: dimmed ? 0.18 : (n.status === 'staged' ? 0.55 : 0.92),
+                      // 描边用底色：节点之间有呼吸感；选中用亮奶油白圈
+                      stroke: n.id === sel ? '#f5ece7' : GBG,
+                      strokeWidth: n.id === sel ? 2.5 : 1.5,
                       strokeDasharray: n.status === 'staged' ? '3 2' : undefined,
                     }),
                     h('title', null, n.title + ' · ' + n.category + ' · 度 ' + n.degree + ' · 命中 ' + n.hits),
