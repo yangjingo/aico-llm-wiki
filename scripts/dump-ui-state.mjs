@@ -11,7 +11,7 @@ const ctxLike = {
 const mod = await import('../index.js')
 mod.apply(ctxLike, { wikiRoot: 'D:/Harness/dsh-wiki' })
 const res = await new Promise((resolve) => {
-  route.handler({ url: '/learn-wiki/api/state' }, { writeHead: () => {}, end: (b) => resolve(JSON.parse(b)) })
+  route.handler({ url: '/aico-local-wiki/api/state' }, { writeHead: () => {}, end: (b) => resolve(JSON.parse(b)) })
 })
 
 console.log('=== 能力 ===')

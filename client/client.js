@@ -1,5 +1,5 @@
 /**
- * dsh-learn-wiki —— 浏览器半。
+ * aico-local-wiki —— 浏览器半。
  *
  * 零构建：手写 CJS，由 window.__ModuleLoader__ 装载；react 与 DSH 原语经
  * factory 的 require 注入。契约来自 DSH 自己的客户端插件
@@ -18,7 +18,7 @@
  */
 
 window.__ModuleLoader__.load({
-  id: 'dsh-learn-wiki',
+  id: 'aico-local-wiki',
   factory: (require) => {
     var module = { exports: {} }
     var exports = module.exports
@@ -41,19 +41,19 @@ window.__ModuleLoader__.load({
     try {
       P = require('@deepseek-ai/dsh-client-ui-primitives') || {}
     } catch (e) {
-      if (typeof console !== 'undefined') console.error('[dsh-learn-wiki] DSH 原语不可用，退化为原生元素：', e)
+      if (typeof console !== 'undefined') console.error('[aico-local-wiki] DSH 原语不可用，退化为原生元素：', e)
     }
 
-    var API = '/learn-wiki/api/state'
-    var PAGE_API = '/learn-wiki/api/page'
-    var TRIAGE_API = '/learn-wiki/api/triage'
+    var API = '/aico-local-wiki/api/state'
+    var PAGE_API = '/aico-local-wiki/api/page'
+    var TRIAGE_API = '/aico-local-wiki/api/triage'
     // 模型目录单独一条端点：列 provider/模型可能打网络，不能并进每 8 秒轮询的
     // /api/state。只在打开「模型」页签时取一次。
-    var MODELS_API = '/learn-wiki/api/models'
-    var LLM_API = '/learn-wiki/api/llm'
-    var HARVEST_API = '/learn-wiki/api/harvest'
+    var MODELS_API = '/aico-local-wiki/api/models'
+    var LLM_API = '/aico-local-wiki/api/llm'
+    var HARVEST_API = '/aico-local-wiki/api/harvest'
     // 图谱也是独立端点：建图要遍历全库，不进 8 秒轮询（与服务端同一取舍）。
-    var GRAPH_API = '/learn-wiki/api/graph'
+    var GRAPH_API = '/aico-local-wiki/api/graph'
 
     /** DSH 图标；没有原语时返回 null（不画假的代替品）。 */
     function Ico(name, size) {
@@ -448,7 +448,7 @@ window.__ModuleLoader__.load({
     function ensureStyle() {
       if (styled || typeof document === 'undefined') return
       var el = document.createElement('style')
-      el.setAttribute('data-dsh-learn-wiki', '1')
+      el.setAttribute('data-aico-local-wiki', '1')
       el.textContent = CSS
       document.head.appendChild(el)
       styled = true
@@ -741,7 +741,7 @@ window.__ModuleLoader__.load({
         if (keep && i >= 0) cur.splice(i, 1)
         setBusy(name)
         setOptKey(name, !keep)
-        post('/learn-wiki/api/capabilities', { enabled: true, explicitOnly: cur })
+        post('/aico-local-wiki/api/capabilities', { enabled: true, explicitOnly: cur })
           .then(function (r) {
             setBusy(null)
             if (r.j && r.j.ok) { setMsg({ ok: true, text: '已写入 wiki.config.json — 下一次会话装配时生效' }); props.onChanged && props.onChanged() }
@@ -1159,7 +1159,7 @@ window.__ModuleLoader__.load({
       var commit = function (id) {
         setBusy(id)
         setPend(function (l) { return l.indexOf(id) >= 0 ? l : l.concat([id]) })
-        post('/learn-wiki/api/commit', { id: id })
+        post('/aico-local-wiki/api/commit', { id: id })
           .then(function (r) {
             setBusy(null)
             if (r.j && r.j.ok) { setMsg({ ok: true, text: '已固化 ' + id }); props.onChanged && props.onChanged() }
@@ -1938,7 +1938,7 @@ window.__ModuleLoader__.load({
 
       var commit = function (id) {
         setBusy(true)
-        post('/learn-wiki/api/commit', { id: id })
+        post('/aico-local-wiki/api/commit', { id: id })
           .then(function (r) {
             setBusy(false)
             if (r.j && r.j.ok) {
@@ -2188,7 +2188,7 @@ window.__ModuleLoader__.load({
       return h('div', { className: 'lw-shell' },
         h('div', { className: 'lw-head' },
           h('span', { className: 'lw-headicon' }, Ico('IconSkillOutline16', 16)),
-          h('span', { className: 'lw-title' }, 'learn-wiki'),
+          h('span', { className: 'lw-title' }, 'aico-wiki'),
           // state 存在但 app 缺失是会发生的（接口半途出错、离线渲染）。
           // 直接取 state.app.wikiRoot 会当场抛，整棵树跟着完蛋。
           h('span', {
@@ -2199,7 +2199,7 @@ window.__ModuleLoader__.load({
         h('div', {
           className: 'lw-tabs',
           role: 'tablist',
-          'aria-label': 'learn-wiki 页签',
+          'aria-label': 'aico-wiki 页签',
           onKeyDown: tabKeys(TABS.map(function (t) { return t.id }), tab, setTab),
         },
           TABS.map(function (t) {
@@ -2215,7 +2215,7 @@ window.__ModuleLoader__.load({
         ),
         h('div', { className: 'lw-body lw-scroll' },
           err
-            ? h('div', { className: 'lw-msg err' }, '读不到状态：' + err + '　（/learn-wiki/api/state）')
+            ? h('div', { className: 'lw-msg err' }, '读不到状态：' + err + '　（/aico-local-wiki/api/state）')
             : !state
               ? h('div', { className: 'lw-empty' }, '读取中…')
               : tab === 'capabilities'
@@ -2286,7 +2286,7 @@ window.__ModuleLoader__.load({
         className: 'lw-panel lw-root',
         role: 'dialog',
         'aria-modal': 'true',
-        'aria-label': 'learn-wiki',
+        'aria-label': 'aico-wiki',
         tabIndex: -1,
         ref: ref,
         // state / initialTab / initialSeg 透传给 PanelBody：
@@ -2397,7 +2397,7 @@ window.__ModuleLoader__.load({
         })
       }
 
-      if (err) return h('div', { className: 'lw-msg err' }, '读不到分拣列表：' + err + '　（/learn-wiki/api/triage）')
+      if (err) return h('div', { className: 'lw-msg err' }, '读不到分拣列表：' + err + '　（/aico-local-wiki/api/triage）')
       if (!items) return h('div', { className: 'lw-empty' }, '读取中…')
 
       var inTrash = items.filter(function (x) { return x.from === '.trash' }).length
@@ -2498,7 +2498,7 @@ window.__ModuleLoader__.load({
     // 所以开关**不能**是某个组件的 useState —— 那样另一处够不着。
     // 用一个极小的订阅式 store：谁都能 set，谁订阅谁重渲染。
 
-    var PENDING_API = '/learn-wiki/api/pending'
+    var PENDING_API = '/aico-local-wiki/api/pending'
 
     function makeStore(initial) {
       var v = initial
@@ -2606,8 +2606,8 @@ window.__ModuleLoader__.load({
       // 标题里把数字说全 —— 光一个角标不解释是什么在等。轨道态下标签不渲染，
       // 这条 title 就是唯一还能说明"这是什么、有几件事"的地方。
       var tip = n > 0
-        ? 'learn-wiki —— ' + (p.data.stagedReady || 0) + ' 页可固化 / ' + (p.data.stagedTotal || 0) + ' 页暂存，' + ((p.data.trash || 0) + (p.data.rejected || 0)) + ' 个待分拣'
-        : 'learn-wiki —— 能力 / 知识 / 补料'
+        ? 'aico-wiki —— ' + (p.data.stagedReady || 0) + ' 页可固化 / ' + (p.data.stagedTotal || 0) + ' 页暂存，' + ((p.data.trash || 0) + (p.data.rejected || 0)) + ' 个待分拣'
+        : 'aico-wiki —— 能力 / 知识 / 补料'
       return h(React.Fragment, null,
         h('div', { className: 'lw-fb-cell' + (wide ? '' : ' lw-fb-cell-rail') },
           h('button', {
@@ -2615,12 +2615,12 @@ window.__ModuleLoader__.load({
             className: 'lw-fb' + (wide ? '' : ' lw-fb-rail'),
             title: tip,
             // 轨道态没有可见标签，按钮的**可及名**只能靠这里。
-            'aria-label': 'learn-wiki',
+            'aria-label': 'aico-wiki',
             'aria-expanded': open,
             onClick: function () { benchStore.set({ open: !open, tab: open ? null : null }) },
           },
             icon,
-            wide ? h('span', { className: 'lw-fb-label' }, 'learn-wiki') : null,
+            wide ? h('span', { className: 'lw-fb-label' }, 'aico-wiki') : null,
             // 角标只在**真有事**时出现。永远显示一个 0 会训练人忽略它。
             // 轨道态只画点不写数字（36px 圆里放不下），数字留在 title 里。
             n > 0 ? h('span', { className: 'lw-fb-dot' }, wide ? String(n) : '') : null,
@@ -2674,7 +2674,7 @@ window.__ModuleLoader__.load({
             loadPending()
             return
           }
-          post('/learn-wiki/api/commit', { id: ids[i] }).then(function (r) {
+          post('/aico-local-wiki/api/commit', { id: ids[i] }).then(function (r) {
             if (r.j && r.j.ok) okN++ ; else failN.push(ids[i])
             step(i + 1)
           })
@@ -2900,15 +2900,15 @@ window.__ModuleLoader__.load({
       )
     }
     // ── 插件契约 ──
-    var name = 'dsh-learn-wiki'
+    var name = 'aico-local-wiki'
     var inject = ['slots', 'locale', 'theme']
 
-    var ZH = { title: 'learn-wiki', capabilities: '能力', knowledge: '知识', supply: '补料' }
-    var EN = { title: 'learn-wiki', capabilities: 'Capabilities', knowledge: 'Knowledge', supply: 'Supply' }
+    var ZH = { title: 'aico-wiki', capabilities: '能力', knowledge: '知识', supply: '补料' }
+    var EN = { title: 'aico-wiki', capabilities: 'Capabilities', knowledge: 'Knowledge', supply: 'Supply' }
 
     function apply(ctx) {
       try {
-        ctx.effect(function () { return ctx.locale.register(name, { zh: ZH, en: EN }) }, 'dsh-learn-wiki: dictionaries')
+        ctx.effect(function () { return ctx.locale.register(name, { zh: ZH, en: EN }) }, 'aico-local-wiki: dictionaries')
       } catch (e) { /* 字典注册失败不该挡住 UI */ }
       // ── 对话内的 wiki_recall 卡片 ──
       //
@@ -2923,12 +2923,12 @@ window.__ModuleLoader__.load({
           }, RecallCard)
         })
       } catch (e) {
-        try { console.error('[dsh-learn-wiki] wiki_recall 卡片座位不可用：', e) } catch (err) {}
+        try { console.error('[aico-local-wiki] wiki_recall 卡片座位不可用：', e) } catch (err) {}
       }
       ctx.slots.inject('sidebar.footer.action', function () {
         return ctx.slots.register({
           name: 'sidebar.footer.action',
-          id: 'dsh-learn-wiki-entry',
+          id: 'aico-local-wiki-entry',
           order: 58,
           locale: name,
         }, FooterEntry)
@@ -2942,7 +2942,7 @@ window.__ModuleLoader__.load({
         ctx.slots.inject('conversation.input.dock', function () {
           return ctx.slots.register({
             name: 'conversation.input.dock',
-            id: 'dsh-learn-wiki-pending',
+            id: 'aico-local-wiki-pending',
             order: 40,
             locale: name,
           }, PendingBar)
@@ -2950,7 +2950,7 @@ window.__ModuleLoader__.load({
       } catch (e) {
         // 座位拿不到就不显示提示条，但**面板照旧可用**（侧边栏入口还在）。
         // 一个附加的提示不该有能力拖垮整个插件。
-        try { console.error('[dsh-learn-wiki] 待办提示条座位不可用：', e) } catch (err) {}
+        try { console.error('[aico-local-wiki] 待办提示条座位不可用：', e) } catch (err) {}
       }
     }
 

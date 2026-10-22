@@ -29,7 +29,7 @@ const check = (label, ok, detail = '') => {
 
 // 与 index.js 的 buildUserMessage 同形状，但**不 import 宿主** —— 这个脚本要能在
 // 没有 DSH 的环境里跑（压缩逻辑与宿主无关，测它不该需要宿主）。
-const buildUserMessage = (text, source) => ({ role: 'user', content: [{ type: 'text', text }], source: source ?? { kind: 'plugin', plugin: 'dsh-learn-wiki' } })
+const buildUserMessage = (text, source) => ({ role: 'user', content: [{ type: 'text', text }], source: source ?? { kind: 'plugin', plugin: 'aico-local-wiki' } })
 const compact = createHindsightCompactor(buildUserMessage)
 
 // ── 夹具：TOOL_GUIDE 从本机 Hindsight 运行时里抠 ──

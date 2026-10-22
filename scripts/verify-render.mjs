@@ -51,7 +51,7 @@ console.log('  React ' + H.version + '（取自 DSH 自己的 node_modules）')
 const M = H.build(true)
 check('从模块加载器捕获到 factory', typeof H.factory === 'function')
 check('导出 name/inject/apply（DSH 的客户端插件契约）',
-  M.name === 'dsh-learn-wiki' && Array.isArray(M.inject) && typeof M.apply === 'function',
+  M.name === 'aico-local-wiki' && Array.isArray(M.inject) && typeof M.apply === 'function',
   M.name + ' inject=' + JSON.stringify(M.inject))
 check('导出测试接缝 __components / __logic',
   !!M.__components && !!M.__logic && typeof M.__css === 'string' && M.__css.length > 1000,
@@ -591,7 +591,7 @@ console.log('── 底栏入口（座位 sidebar.footer.action 的 wide 契约�
   const bareHtml = mk({})            // 缺省 / 老调用点
   const bareUndef = mk(undefined)
 
-  check('wide=true：渲染标签', wideHtml.includes('lw-fb-label') && wideHtml.includes('learn-wiki'))
+  check('wide=true：渲染标签', wideHtml.includes('lw-fb-label') && wideHtml.includes('aico-wiki'))
   check('★ wide=false：不渲染标签（36px 圆里放不下字）', !railHtml.includes('lw-fb-label'))
   check('★ wide=false：按钮与单元格都换成轨道类名',
     railHtml.includes('lw-fb-rail') && railHtml.includes('lw-fb-cell-rail'))

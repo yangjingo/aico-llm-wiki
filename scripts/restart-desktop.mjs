@@ -8,12 +8,12 @@
  * 面板这些改动一重载就生效。
  *
  * 但**宿主半不会**。回收渲染器之后插件确实会重新 apply（日志里有
- * "ui: /learn-wiki 已注册…"），可是服务请求的那张路由表仍然是**更早那次 apply**
+ * "ui: /aico-local-wiki 已注册…"），可是服务请求的那张路由表仍然是**更早那次 apply**
  * 的：新加的路由打过去一律 404，而且返回的是插件自己那句 "not found"，
  * 看起来像"路由写错了"，其实是"根本没走到新 handler"。
  *
  * 证据（同一天、同一份代码）：
- *   · 桌面 app 里 GET /learn-wiki/api/models -> 404（body 是插件自己的 not found）
+ *   · 桌面 app 里 GET /aico-local-wiki/api/models -> 404（body 是插件自己的 not found）
  *   · 用 `dsh web --port 3099` 起一个真宿主    -> 200，6 个 provider / 29 个模型
  *   代码没问题，是桌面 app 在跑旧的宿主代码。
  *

@@ -1,8 +1,14 @@
-# dsh-learn-wiki
+# aico-local-wiki
+
+> aiCo 的本地 wiki 插件。fork 自 [Dayi-Z/dsh-learn-wiki](https://github.com/Dayi-Z/dsh-learn-wiki)（v0.3.1，`1d20bd5`），在此基线上继续开发。源码位置：`D:\myCode\agent\aiCo\aico-local-wiki`，以 `link:` 方式安装在 DSH web profile。
 
 DSH 的「边做边学」知识库插件：**工作前自动检索 → 卡住时后台限流联网补料 → 蒸馏落暂存 → 两段式 commit 升入知识库 → 下次自动命中**。
 
 它把 CRAG（Corrective RAG）的纠错回路从"单次问答"搬到 agent 循环上：知识库检索不到就自己去学，学到的东西沉淀下来，下次就不用再学。
+
+## aiCo 的改动（相对上游）
+
+- **图谱页签**：莫兰迪配色 + 酒红画底的知识图谱（节点=页面，实线=共召回 co，虚线=共享标签 tag），点选联动抽屉/固化/知识页签跳转（`lib/graph.js` + `/aico-local-wiki/api/graph`）
 
 ## 它解决什么问题
 

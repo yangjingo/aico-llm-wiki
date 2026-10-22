@@ -242,7 +242,7 @@ let route = null
 const ctx2 = { ...mockCtx, webServer: { register: (r) => { route = r; return () => {} } } }
 const mod2 = await import('../index.js?guard2')
 mod2.apply(ctx2, { wikiRoot: ROOT })
-const body = await new Promise((res) => route.handler({ url: '/learn-wiki/api/state', method: 'GET' }, { writeHead: () => {}, end: (b) => res(b) }))
+const body = await new Promise((res) => route.handler({ url: '/aico-local-wiki/api/state', method: 'GET' }, { writeHead: () => {}, end: (b) => res(b) }))
 const st = JSON.parse(body).struggles
 check('接口给出 struggles.subagent', typeof st.subagent === 'number', 'subagent=' + st.subagent)
 check('subagent 计数与实际记录一致', st.subagent === struggles.filter(s => s.origin === 'subagent').length,

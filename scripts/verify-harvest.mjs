@@ -148,7 +148,7 @@ const llmSaying = (obj) => ({ chat: async () => JSON.stringify(obj) })
 const ok = await runHarvest({
   agent: agentOf(events),
   llm: llmSaying({ skip: false, items: [
-    { title: '位置不能表达状态', category: 'lesson', confidence: 0.85, tags: ['ui'], sources: ['D:/Harness/dsh-learn-wiki/client/client.js'], body: '排序键必须是身份，不能是证据。' },
+    { title: '位置不能表达状态', category: 'lesson', confidence: 0.85, tags: ['ui'], sources: ['D:/Harness/aico-local-wiki/client/client.js'], body: '排序键必须是身份，不能是证据。' },
     { title: '', body: '没有标题的条目应当被丢掉' },
   ] }),
 })

@@ -13,7 +13,7 @@
  *     图标全部是**替身**（见 scripts/lib/ui-harness.mjs）。所以：
  *       组件内部控件的确切外观**不代表真实应用**。
  *       结构、密度、分组、行数、对齐意图是可信的。
- *   · 数据是夹具。想看真实数据：把 /learn-wiki/api/state 的响应存成 JSON，
+ *   · 数据是夹具。想看真实数据：把 /aico-local-wiki/api/state 的响应存成 JSON，
  *     用 --state 传进来。
  *
  * 用法：
