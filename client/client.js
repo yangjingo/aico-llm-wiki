@@ -446,9 +446,11 @@ window.__ModuleLoader__.load({
       '.lw-graph-empty{padding:40px 0;text-align:center;color:var(--lw-fg3)}',
             'border:1px solid var(--lw-line);font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg2)}',
       'display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}',
-      // ── 主面板接管（keyed main，同 aida-lld 形式）──
-      '.lw-center{display:flex;flex-direction:column;width:100%;height:100%;min-height:0;',
-      'padding:16px 18px 0;box-sizing:border-box}',
+      // ── 主面板全屏接管（fixed 覆盖整个 session 区域，含侧栏画布）──
+      // z-index 8000：盖过 session/canvas，但低于侧栏模态（.lw-mask 9000）——
+      // 后备的侧栏模态入口仍可在全屏接管之上打开。
+      '.lw-center-full{position:fixed;inset:0;z-index:8000;display:flex;flex-direction:column;',
+      'min-height:0;padding:20px 28px;box-sizing:border-box;background:#fff;overflow:auto}',
       // ── 插件页卡片（plugins.item / plugins.detail.section）──
       '.lw-plug-card{display:flex;align-items:center;gap:12px;padding:14px 16px;',
       'border:1px solid var(--lw-line);border-radius:12px;background:var(--lw-raise)}',
@@ -2939,16 +2941,25 @@ window.__ModuleLoader__.load({
       )
     }
 
-    /** 主面板内容：占满中央区（保留侧栏），头部带关闭。
-     *  注入面（宿主平铺为 props）：close()、entryTab()（命令选中的页签）。 */
+    /** 主面板内容：fixed 全屏接管整个 session 区域（含侧栏画布，spec 04 修订）。
+     *  注入面（宿主平铺为 props）：close()、entryTab()（命令选中的页签）。
+     *  agent 侧工具（wiki_recall 等）注册在宿主进程，不受 UI 接管影响。 */
     function AicoWikiCenter(props) {
       ensureStyle()
       var entryTab = (typeof props.entryTab === 'function' ? props.entryTab() : props.entryTab) || 'knowledge'
-      return h('div', { className: 'lw-center lw-root' },
+      // Esc 退出：全屏接管后宿主的返回路径（侧栏切换）被盖住，键盘必须有独立退路。
+      // SSR/离线渲染没有 document，静默跳过。
+      useEffect(function () {
+        if (typeof document === 'undefined' || !props.close) return
+        var onKey = function (e) { if (e.key === 'Escape') { try { props.close() } catch (err) {} } }
+        document.addEventListener('keydown', onKey)
+        return function () { document.removeEventListener('keydown', onKey) }
+      }, [props.close])
+      return h('div', { id: 'aico-wiki-center', className: 'lw-center-full lw-root' },
         h('div', { className: 'lw-head' },
           h('span', { className: 'lw-headicon' }, WikiIcon(16)),
           h('span', { className: 'lw-title' }, 'aico-wiki'),
-          h('span', { className: 'lw-tabsum' }, '本地知识库工作台'),
+          h('span', { className: 'lw-tabsum' }, '本地知识库工作台 · Esc 退出'),
           h(Btn, {
             style: { marginLeft: 'auto' },
             onClick: function () { props.close && props.close() },

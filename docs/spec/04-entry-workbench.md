@@ -1,9 +1,18 @@
 # Spec 04 · 工作台入口（对齐 aida-lld 形式）
 
 Date: 2026-10-22
-Status: **Accepted / Implemented**（v0.5.0）
+Status: **Accepted / Implemented**（v0.5.0；同日修订：主面板改为全屏接管，见文末）
 Input: 用户指示「入口参考 aida-lld：通过 aico-wiki 进入工作台；安装后应有二级页面查看信息」。
 （同轮曾要求 MCP 知识库支持，用户随后撤销，未实现。）
+
+> **修订（2026-10-22）**：用户指示主面板应**接管整个 session 区域**。
+> 实现从「keyed main 占中央格 + 保留侧栏」改为 `#aico-wiki-center`
+> fixed 全屏覆盖（inset:0, z-index:8000，白底），侧栏与画布一并盖住；
+> 退出路径 = 头部「关闭工作台」按钮或 Esc（接管后宿主侧栏切换被盖住，
+> 键盘必须有独立退路）。z-index 刻意低于侧栏模态（.lw-mask 9000），
+> 后备模态入口仍可用。**agent 侧工具与 HTTP 接口注册在宿主进程，
+> 不受 UI 接管影响**——wiki_recall / wiki_learn / wiki_commit 及
+> /aico-local-wiki/api/* 在接管期间照常可调。
 
 ## 决定
 
