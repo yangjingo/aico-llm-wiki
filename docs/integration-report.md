@@ -50,6 +50,26 @@ dsh plugin --profile desktop add link:D:\myCode\agent\aiCo\aico-local-wiki
 
 **修复**：改用 `--profile desktop` 安装（见上节）。web profile 里的旧安装已移除。
 
+## 3.5 事故记录 2：版本豁免双精确（2026-10-25）
+
+**现象**：应用重启后 aico-local-wiki 全部路由 404、`<wikiRoot>/.aico-local-wiki.log`
+无任何新行（apply 未执行），而同 profile 的 @aida/* 插件全部正常。
+
+**根因**：`compatibility.json` 的豁免是「**包版本 × 宿主版本**」双精确匹配——
+记录的是 `aico-local-wiki@0.4.0 × 0.2.1-rc.2`；包升到 0.5.0、宿主升级到
+0.2.1-rc.3 后，新进程启动时两项都不匹配 → profile startup 静默拒载（无错误
+输出、无日志；唯一痕迹是宿主重写 cordis.yml）。
+
+**判据**：
+1. 同 profile 其它插件正常、本插件路由全 404 → 先查 `profiles/<p>/compatibility.json`；
+2. `dsh plugin --profile desktop allow-version aico-local-wiki@<包版本> --dsh-version <实际宿主版本> --accept-risk`；
+3. ⚠️ CLI 提示的 dsh-version 可能与桌面宿主实际版本不同步，以报错信息里的
+   实际版本为准重试；
+4. 豁免后**必须重启桌面应用**——宿主只在启动时装载 bundle，`remove+add link`
+   不会热重载（已实测）。
+
+**预防**：每次 bump package.json version 后，同步重授豁免（进发布流程）。
+
 ## 4. Post-restart verification
 
 重启桌面应用后按序验证：
