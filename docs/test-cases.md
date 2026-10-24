@@ -41,3 +41,13 @@
 - `<circle>` 数 = 节点数；`<line>` 数 = 边数。
 - `aria-label` 带规模（「知识图谱：N 个页面，M 条连边」）。
 - 无选中时不画抽屉；PanelBody `initialTab='graph'` 渲染不崩；TABS 含 graph。
+
+## TC-06 v2：目录树 / vendor 静态路由 / 溯源（verify-ui-v2.mjs）
+
+- `/api/tree`：200；`tree.pages.fact['env-vm.md']` 为叶子（`__leaf` + id/title）；staged 叶子带 `status=staged`。
+- `/api/state`：committed 带 `srcs`（含 `session://` 锚点与 URL）；staged 同样带 `srcs`。
+- `/vendor/d3.min.js`：200 且含 `forceSimulation`/`zoom`（图谱交互真正依赖的 API）。
+- ★ 越界守卫：`/vendor/../../package.json` 与白名单外后缀 → 404（resolveWithin + MIME 白名单）。
+- `/api/graph`（handler 级）：节点带服务端布局坐标；stats 口径正确。
+- `sourceKind`：session:// → 会话；URL → 链接（带 href）；路径 → 文档。
+- 渲染：知识表「来源」列 chips 带类型（会话/链接）；URL 渲染为可点链接。

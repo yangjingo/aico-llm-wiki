@@ -50,6 +50,7 @@
     "verify": "node scripts/verify-core.mjs",
     "verify:render": "node scripts/verify-render.mjs",
     "verify:graph": "node scripts/verify-graph.mjs",
+    "verify:ui-v2": "node scripts/verify-ui-v2.mjs",
     "verify:subagent-guard": "node scripts/verify-subagent-guard.mjs",
     "verify:harvest": "node scripts/verify-harvest.mjs",
     "verify:sessions": "node scripts/verify-sessions.mjs",
