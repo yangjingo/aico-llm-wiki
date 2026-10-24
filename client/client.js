@@ -177,6 +177,26 @@ window.__ModuleLoader__.load({
       'font-weight:700;color:var(--lw-fg);line-height:1.1;display:flex;align-items:center;gap:7px}',
       '.lw-kpi-n.r{color:var(--lw-brand)}',
       '.lw-kpi-l{font-size:12px;color:var(--lw-fg2);margin-top:3px}',
+      // ── 知识页签：目录树 + 表格两栏（spec 06 修订）──
+      '.lw-kn{display:flex;gap:16px;min-height:0;align-items:flex-start}',
+      '.lw-kn-main{flex:1;min-width:0}',
+      '.lw-tree{flex:none;width:236px;border:1px solid var(--lw-line-soft);border-radius:12px;',
+      'background:var(--lw-raise);padding:10px 6px;max-height:560px;overflow:auto}',
+      '.lw-tree-h{font:600 13px/20px \'Noto Sans SC\',sans-serif;padding:2px 8px 8px;display:flex;align-items:baseline}',
+      '.lw-tree-dir{display:flex;align-items:center;gap:5px;width:100%;border:0;background:none;',
+      'cursor:pointer;font:inherit;font-size:12.5px;color:var(--lw-fg2);padding:5px 6px;text-align:left;border-radius:6px}',
+      '.lw-tree-dir:hover{background:var(--lw-hover)}',
+      '.lw-tree-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+      '.lw-tree-leaf{display:flex;align-items:center;gap:2px}',
+      '.lw-tree-file{display:flex;align-items:center;gap:6px;flex:1;min-width:0;border:0;background:none;',
+      'cursor:pointer;font:inherit;font-size:12.5px;color:var(--lw-fg);padding:4px 6px;text-align:left;border-radius:6px}',
+      '.lw-tree-file:hover{background:var(--lw-hover)}',
+      '.lw-tree-dot{width:8px;height:8px;border-radius:99px;flex:none}',
+      '.lw-tree-dot.fact{background:#b5333b}.lw-tree-dot.decision{background:#1565c0}',
+      '.lw-tree-dot.lesson{background:#566472}.lw-tree-dot.howto{background:#cf6b72}',
+      '.lw-tree-goto{flex:none;border:1px solid var(--lw-line);background:none;color:var(--lw-fg3);',
+      'font-size:11px;border-radius:6px;padding:1px 6px;cursor:pointer}',
+      '.lw-tree-goto:hover{color:var(--lw-brand);border-color:var(--lw-brand)}',
       // 窄面板（模态/分屏）：目录塌成横条，红高亮移到底边。
       '@media (max-width:760px){.lw-work{flex-direction:column}',
       '.lw-nav{width:auto;display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--lw-line-soft)}',
@@ -251,6 +271,15 @@ window.__ModuleLoader__.load({
       '.lw-srclist li{display:flex;align-items:center;gap:6px;min-width:0}',
       '.lw-srclist a{color:var(--lw-info);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
       '.lw-srclist a:hover{text-decoration:underline}',
+      // 溯源 chips（spec 06 修订）：类型徽标 + 短值；类型色走三色体系。
+      '.lw-srcline{display:inline-flex;gap:4px;align-items:center;min-width:0;flex-wrap:wrap}',
+      '.lw-srcchip{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);border:1px solid var(--lw-line);',
+      'border-radius:99px;padding:0 7px;color:var(--lw-fg2);white-space:nowrap;max-width:150px;',
+      'overflow:hidden;text-overflow:ellipsis}',
+      '.lw-src-session{border-color:#b5333b;color:#b5333b}',
+      '.lw-src-doc{border-color:#566472;color:#566472}',
+      '.lw-src-url{border-color:#1565c0;color:#1565c0}',
+      'a.lw-srcchip:hover{background:#fdf0f1}',
       '.lw-pre{margin:0;white-space:pre-wrap;word-break:break-word;color:var(--lw-fg2);',
       'font:var(--dsw-font-markdown-code-block-small,12px/18px ui-monospace,monospace);max-height:340px;overflow:auto}',
       '.lw-bar{display:flex;align-items:center;gap:9px;margin:0 0 10px;flex-wrap:wrap}',
@@ -467,6 +496,11 @@ window.__ModuleLoader__.load({
       '.lw-graph-svgbox{flex:1;min-height:340px;border:1px solid var(--lw-line-soft);border-radius:10px;overflow:hidden;',
       'background:#fafafa;border-color:#d5d9de;position:relative}',
       '.lw-graph-svg{display:block;width:100%;height:100%}',
+      // d3 交互图：容器填满画布；标签白描边光晕（Neo4j 式可读性）。
+      '.lw-d3{width:100%;height:100%}',
+      '.lw-d3 svg{display:block}',
+      '.lw-d3 text{font:10px \'Noto Sans SC\',sans-serif;paint-order:stroke;',
+      'stroke:#fff;stroke-width:3px;stroke-linejoin:round;pointer-events:none}',
       // 文本节点标签用 SVG text，字体走 token；fill 在 JS 里按状态给。
       '.lw-graph-svg text{font:var(--dsw-font-xxxs-11,10px/14px \'Noto Sans SC\',sans-serif);pointer-events:none}',
       '.lw-graph-svg .lw-gnode{cursor:pointer}',
@@ -576,6 +610,44 @@ window.__ModuleLoader__.load({
       'repeat-identical': '重复相同调用',
       'repeat-failure': '连续失败',
       'recurring-error': '反复撞同一错误',
+    }
+
+    /** 溯源（spec 06 修订）：把一条 source 归类并给出短显示。
+     *  三种形状：session://<id>（会话锚点，harvest 永远附）、http(s) URL、
+     *  其余一律按文档路径。纯函数，导出可穷举断言。 */
+    function sourceKind(s) {
+      var v = String(s ?? '')
+      if (v.startsWith('session://')) {
+        var sid = v.slice('session://'.length)
+        return { kind: 'session', label: '会话', short: sid.length > 10 ? sid.slice(0, 8) + '…' : sid, full: v }
+      }
+      if (/^https?:\/\//i.test(v)) {
+        try {
+          var u = new URL(v)
+          var path = (u.pathname && u.pathname !== '/') ? u.pathname.split('/').filter(Boolean).pop() : u.hostname
+          return { kind: 'url', label: '链接', short: (path || u.hostname).slice(0, 24), full: v, href: v }
+        } catch (e) {
+          return { kind: 'url', label: '链接', short: v.slice(0, 24), full: v, href: v }
+        }
+      }
+      if (!v) return { kind: 'doc', label: '文档', short: '(空)', full: v }
+      var base = v.replace(/\\/g, '/').split('/').filter(Boolean).pop()
+      return { kind: 'doc', label: '文档', short: (base || v).slice(0, 24), full: v }
+    }
+
+    /** 一行溯源 chips：最多 2 个 + 「+N」，title 带全量。 */
+    function SourceChips(props) {
+      var list = (props.sources || []).map(sourceKind)
+      if (list.length === 0) return h('span', { className: 'c-dim' }, '—')
+      var shown = list.slice(0, 2)
+      var rest = list.length - shown.length
+      return h('span', { className: 'lw-srcline', title: list.map(function (x) { return x.label + '：' + x.full }).join('\n') },
+        shown.map(function (x, i) {
+          return x.href
+            ? h('a', { key: i, className: 'lw-srcchip lw-src-' + x.kind, href: x.href, target: '_blank', rel: 'noreferrer', onClick: function (e) { e.stopPropagation() } }, x.label + ' ' + x.short)
+            : h('span', { key: i, className: 'lw-srcchip lw-src-' + x.kind }, x.label + ' ' + x.short)
+        }),
+        rest > 0 ? h('span', { key: '+', className: 'lw-srcchip c-dim' }, '+' + rest) : null)
     }
 
     /** 展开箭头：有 DSH 图标就用，没有就用一个纯 CSS 三角。 */
@@ -1232,7 +1304,7 @@ window.__ModuleLoader__.load({
         pendingRows.push({
           id: sp.id, title: sp.title, category: sp.category,
           cls: 'unconfirmed', hits: 0, confirmed: 0, suspect: 0,
-          sources: sp.sources, updated: null, created: null,
+          sources: sp.sources, srcs: sp.srcs, updated: null, created: null,
           quarantined: false, pending: true,
         })
       }
@@ -1258,7 +1330,26 @@ window.__ModuleLoader__.load({
       var counts = k.counts || {}
       var countOf = function (f) { return committedAll.filter(f.test).length }
 
-      return h('div', null,
+      // 目录树（spec 06 修订）：像本地目录一样浏览知识库，点击打开详情、
+      // 可一键跳图谱定位。树数据来自 /api/tree（独立端点，低频，只取一次）。
+      var treeState = useState(null)
+      var tree = treeState[0], setTree = treeState[1]
+      var loadTree = useCallback(function () {
+        getJson('/aico-local-wiki/api/tree')
+          .then(function (r) {
+            if (r.j && r.j.ok) setTree(r.j.tree || {})
+          })
+          .catch(function () { /* 树是导航增强，读不到不挡表格 */ })
+      }, [])
+      useEffect(function () { loadTree() }, [loadTree])
+
+      return h('div', { className: 'lw-kn' },
+        h(KbTree, {
+          tree: tree,
+          onOpen: function (id) { setOpen(id); loadPage(id) },
+          onGoto: props.onGotoGraph,
+        }),
+        h('div', { className: 'lw-kn-main' },
         h('div', { className: 'lw-sec' },
           h('div', { className: 'lw-sec-h' },
             h('span', { className: 'lw-sec-t' }, '已固化'),
@@ -1284,6 +1375,7 @@ window.__ModuleLoader__.load({
               h('col', { style: { width: '26px' } }),
               h('col', null),
               h('col', { style: { width: '96px' } }),
+              h('col', { style: { width: '150px' } }),
               h('col', { style: { width: '86px' } }),
               h('col', { style: { width: '58px' } }),
               h('col', { style: { width: '58px' } }),
@@ -1293,6 +1385,7 @@ window.__ModuleLoader__.load({
               h('th', { className: 'lw-th' }, ''),
               h('th', { className: 'lw-th' }, '知识'),
               h('th', { className: 'lw-th' }, '证据'),
+              h('th', { className: 'lw-th' }, '来源'),
               h('th', { className: 'lw-th' }, '更新'),
               h('th', { className: 'lw-th r' }, '命中'),
               h('th', { className: 'lw-th r' }, '证实'),
@@ -1331,13 +1424,16 @@ window.__ModuleLoader__.load({
                         }, '固化中…')
                       : h('span', { className: ci.cls, style: { display: 'inline-flex', alignItems: 'center', gap: '6px' } },
                           h(Dot, { state: ci.state, size: 8 }), ci.label)),
+                  // 溯源列（spec 06 修订）：会话 xxx / 文档 xxx / 链接 xxx，
+                  // chips 短显 + title 全量；URL 可点开，会话/文档只读（title 看全）。
+                  h('td', { className: 'lw-td' }, h(SourceChips, { sources: p.srcs })),
                   h('td', { className: 'lw-td' }, h('span', { className: 'lw-num' }, when(p.updated || p.created))),
                   h('td', { className: 'lw-td r' }, h('span', { className: 'lw-num' }, num(p.hits))),
                   h('td', { className: 'lw-td r' }, h('span', { className: 'lw-num c-ok' }, num(p.confirmed))),
                   h('td', { className: 'lw-td r' }, h('span', { className: 'lw-num' + (p.suspect > 0 ? ' c-bad' : '') }, num(p.suspect)))
                 ),
                 isOpen ? h('tr', { key: p.id + ':d' },
-                  h('td', { className: 'lw-td detail', colSpan: 7 },
+                  h('td', { className: 'lw-td detail', colSpan: 8 },
                     h('div', { className: 'lw-exp' }, h(PageDetail, { id: p.id, meta: p, page: pg, onRetry: function () { loadPage(p.id) } })))) : null
               ]
             }))
@@ -1389,6 +1485,64 @@ window.__ModuleLoader__.load({
             }))
           ) : h('div', { className: 'lw-empty' }, '暂存区是空的。')
         )
+        )
+      )
+    }
+
+    /** 目录树：文件浏览器语义——文件夹可折叠、叶子=页面文件。
+     *  打开（onOpen）= 在右侧表格展开该页详情；跳谱（onGoto）= 图谱定位。 */
+    function KbTree(props) {
+      var t = props.tree
+      if (!t) return h('div', { className: 'lw-tree' },
+        h('div', { className: 'lw-tree-h' }, '目录'),
+        h('div', { className: 'lw-empty' }, '读取中…'))
+      return h('div', { className: 'lw-tree lw-scroll' },
+        h('div', { className: 'lw-tree-h' }, '目录', h('span', { className: 'lw-sec-n', style: { marginLeft: '6px' } }, 'llm-wiki')),
+        h(KbTreeNode, { name: '', node: t, depth: 0, onOpen: props.onOpen, onGoto: props.onGoto })
+      )
+    }
+
+    function KbTreeNode(props) {
+      var node = props.node || {}
+      var openState = useState(true)
+      var open = openState[0], setOpen = openState[1]
+      var keys = Object.keys(node)
+      var folders = keys.filter(function (k) { return node[k] && !node[k].__leaf })
+      var leaves = keys.filter(function (k) { return node[k] && node[k].__leaf })
+      var pad = { paddingLeft: (6 + props.depth * 14) + 'px' }
+      return h('div', { className: 'lw-tree-node' },
+        // 文件夹行（本节点名；depth=0 是根，不显示）
+        props.depth > 0 ? h('button', {
+          type: 'button', className: 'lw-tree-dir', style: pad,
+          onClick: function () { setOpen(!open) },
+          'aria-expanded': open,
+        },
+          h(Chev, { open: open }),
+          h('span', { className: 'lw-tree-name' }, props.name),
+          h('span', { className: 'lw-sec-n' }, String(folders.length + leaves.length))
+        ) : null,
+        open || props.depth === 0 ? h('div', null,
+          folders.map(function (k) {
+            return h(KbTreeNode, { key: k, name: k, node: node[k], depth: props.depth + 1, onOpen: props.onOpen, onGoto: props.onGoto })
+          }),
+          leaves.map(function (k) {
+            var leaf = node[k]
+            return h('div', { key: k, className: 'lw-tree-leaf', style: { paddingLeft: (14 + props.depth * 14) + 'px' }, title: k },
+              h('button', {
+                type: 'button', className: 'lw-tree-file',
+                onClick: function () { props.onOpen && props.onOpen(leaf.id) },
+                title: '打开：' + (leaf.title || leaf.id),
+              },
+                h('span', { className: 'lw-tree-dot ' + (leaf.category || 'fact') }),
+                h('span', { className: 'lw-tree-name' }, leaf.title || k)),
+              props.onGoto ? h('button', {
+                type: 'button', className: 'lw-tree-goto',
+                title: '在图谱中定位', 'aria-label': '在图谱中定位 ' + (leaf.title || leaf.id),
+                onClick: function () { props.onGoto(leaf.id) },
+              }, '图') : null
+            )
+          })
+        ) : null
       )
     }
 
@@ -1419,13 +1573,14 @@ window.__ModuleLoader__.load({
           m.factor != null ? h('span', null, '强化系数 x' + m.factor) : null
         ),
         h(Md, { text: d.body || '' }),
+        // 溯源列表（spec 06 修订）：类型徽标（会话/文档/链接）+ 完整值。
         srcs.length ? h('ul', { className: 'lw-srclist' }, srcs.map(function (u, i) {
-          var href = /^https?:/i.test(String(u)) ? String(u) : null
+          var sk = sourceKind(u)
           return h('li', { key: i },
-            Ico('IconLinkOutline14', 14),
-            href
-              ? h('a', { href: href, target: '_blank', rel: 'noreferrer noopener', title: u }, u)
-              : h('span', { className: 'lw-src', title: String(u) }, String(u)))
+            h('span', { className: 'lw-srcchip lw-src-' + sk.kind }, sk.label),
+            sk.href
+              ? h('a', { href: sk.href, target: '_blank', rel: 'noreferrer noopener', title: sk.full }, sk.full)
+              : h('span', { className: 'lw-src', title: sk.full }, sk.full))
         })) : h('p', { className: 'lw-note c-bad' }, '这条知识没有来源。')
       )
     }
@@ -1873,6 +2028,137 @@ window.__ModuleLoader__.load({
       )
     }
 
+    // ── 三方包加载：client/vendor 的 UMD 经宿主静态路由注入 ────────────────
+    //
+    // 零构建约束不变：不引打包器，vendor UMD 由 /aico-local-wiki/vendor/* 提供，
+    // 运行时按需 <script> 注入一次。失败返回 null，调用方回落静态渲染。
+    function loadVendorScript(src) {
+      return new Promise(function (done) {
+        if (typeof document === 'undefined') return done(null)
+        var existing = document.querySelector('script[data-lw-vendor="' + src + '"]')
+        if (existing) {
+          if (existing.__lwLoaded) return done(window.d3 || null)
+          existing.addEventListener('load', function () { done(window.d3 || null) })
+          existing.addEventListener('error', function () { done(null) })
+          return
+        }
+        var s = document.createElement('script')
+        s.src = src; s.async = true
+        s.setAttribute('data-lw-vendor', src)
+        s.onload = function () { s.__lwLoaded = true; done(window.d3 || null) }
+        s.onerror = function () { done(null) }
+        document.head.appendChild(s)
+      })
+    }
+
+    /** Neo4j Browser 风格交互图：d3-force + 缩放平移 + 节点拖拽 + 悬停/选中高亮。
+     *  d3 拥有 svg 子树（React 只给容器 ref）；选中态仍回写 React state，
+     *  抽屉/固化/跳转等交互全部复用静态版那套。主题：华为红体系（spec 05）。 */
+    function D3Graph(props) {
+      var ref = useRef(null)
+      useEffect(function () {
+        var d3 = props.d3
+        var el = ref.current
+        if (!d3 || !el) return
+        var g = props.graph || {}
+        var nodes = (g.nodes || []).map(function (n) { return Object.assign({}, n) })
+        var links = (g.edges || []).map(function (e) { return { source: e.a, target: e.b, type: e.type, weight: e.weight || 1 } })
+        var W = (el.clientWidth || 900), H = (el.clientHeight || 460)
+
+        var svg = d3.select(el).append('svg')
+          .attr('width', '100%').attr('height', '100%')
+          .attr('viewBox', [0, 0, W, H])
+        var root = svg.append('g')
+        svg.call(d3.zoom().scaleExtent([0.25, 4]).on('zoom', function (ev) { root.attr('transform', ev.transform) }))
+
+        var rOf = function (n) { return 5 + Math.min(9, 2 * Math.log1p((n.hits || 0) * 2 + (n.degree || 0))) }
+        var nbr = {}
+        if (props.sel) {
+          for (var i = 0; i < links.length; i++) {
+            if (links[i].source === props.sel) nbr[links[i].target] = true
+            if (links[i].target === props.sel) nbr[links[i].source] = true
+          }
+        }
+        var dimOf = function (id) { return !!props.sel && id !== props.sel && !nbr[id] }
+
+        var link = root.append('g').selectAll('line').data(links).join('line')
+          .attr('stroke', function (l) { return l.type === 'co' ? GEDGE.co : GEDGE.tag })
+          .attr('stroke-width', function (l) { return l.type === 'co' ? 1.4 + Math.min(1.6, l.weight * 0.3) : 1 })
+          .attr('stroke-dasharray', function (l) { return l.type === 'co' ? null : '3 3' })
+          .attr('opacity', function (l) {
+            var w = l.weight, base = w >= 3 ? 0.85 : w >= 2 ? 0.6 : 0.4
+            var active = !props.sel || l.source === props.sel || l.target === props.sel
+            return active ? base : 0.07
+          })
+
+        var node = root.append('g').selectAll('circle').data(nodes).join('circle')
+          .attr('r', rOf)
+          .attr('fill', function (n) { return n.quarantined ? '#c9ced4' : (GCOLOR[n.category] || GCOLOR.fact) })
+          .attr('stroke', function (n) { return n.quarantined ? '#b5333b' : (n.id === props.sel ? '#1a1a1c' : '#fff') })
+          .attr('stroke-width', function (n) { return n.id === props.sel ? 2.5 : (n.quarantined ? 2 : 1.5) })
+          .attr('stroke-dasharray', function (n) { return n.status === 'staged' ? '3 2' : null })
+          .attr('opacity', function (n) { return dimOf(n.id) ? 0.15 : (n.status === 'staged' ? 0.6 : 0.95) })
+          .style('cursor', 'pointer')
+          .on('click', function (ev, n) { ev.stopPropagation(); props.setSel(n.id === props.sel ? null : n.id) })
+          .on('mouseenter', function (ev, n) {
+            // 悬停高亮邻居（Neo4j 式灰化其它）——只动透明度，不动位置。
+            var nn = {}
+            for (var k = 0; k < links.length; k++) {
+              if (links[k].source.id === n.id || links[k].source === n.id) nn[typeof links[k].target === 'object' ? links[k].target.id : links[k].target] = true
+              if (links[k].target.id === n.id || links[k].target === n.id) nn[typeof links[k].source === 'object' ? links[k].source.id : links[k].source] = true
+            }
+            node.attr('opacity', function (m) { return m.id === n.id || nn[m.id] ? (m.status === 'staged' ? 0.6 : 0.95) : 0.15 })
+            link.attr('opacity', function (l) {
+              var s = typeof l.source === 'object' ? l.source.id : l.source
+              var t = typeof l.target === 'object' ? l.target.id : l.target
+              return s === n.id || t === n.id ? 0.9 : 0.07
+            })
+          })
+          .on('mouseleave', function () {
+            node.attr('opacity', function (m) { return dimOf(m.id) ? 0.15 : (m.status === 'staged' ? 0.6 : 0.95) })
+            link.attr('opacity', function (l) {
+              var base = l.weight >= 3 ? 0.85 : l.weight >= 2 ? 0.6 : 0.4
+              var s = typeof l.source === 'object' ? l.source.id : l.source
+              var t = typeof l.target === 'object' ? l.target.id : l.target
+              var active = !props.sel || s === props.sel || t === props.sel
+              return active ? base : 0.07
+            })
+          })
+        node.append('title').text(function (n) { return n.title + ' · ' + n.category + ' · 度 ' + n.degree + ' · 命中 ' + n.hits })
+
+        var label = root.append('g').selectAll('text').data(nodes).join('text')
+          .text(function (n) { return graphLabelCut(n.title) })
+          .attr('text-anchor', 'middle')
+          .attr('fill', function (n) { return n.id === props.sel ? '#1a1a1c' : '#566472' })
+          .attr('font-weight', function (n) { return n.id === props.sel ? 700 : 400 })
+          .attr('opacity', function (n) { return dimOf(n.id) ? 0.15 : 1 })
+          .attr('pointer-events', 'none')
+
+        var sim = d3.forceSimulation(nodes)
+          .force('link', d3.forceLink(links).id(function (n) { return n.id })
+            .distance(function (l) { return 90 / (1 + Math.log1p(l.weight)) })
+            .strength(function (l) { return l.type === 'co' ? 0.5 : 0.15 }))
+          .force('charge', d3.forceManyBody().strength(-220))
+          .force('center', d3.forceCenter(W / 2, H / 2))
+          .force('collide', d3.forceCollide().radius(function (n) { return rOf(n) + 14 }))
+          .on('tick', function () {
+            link.attr('x1', function (l) { return l.source.x }).attr('y1', function (l) { return l.source.y })
+              .attr('x2', function (l) { return l.target.x }).attr('y2', function (l) { return l.target.y })
+            node.attr('cx', function (n) { return n.x }).attr('cy', function (n) { return n.y })
+            label.attr('x', function (n) { return n.x }).attr('y', function (n) { return n.y + rOf(n) + 12 })
+          })
+
+        node.call(d3.drag()
+          .on('start', function (ev, n) { if (!ev.active) sim.alphaTarget(0.25).restart(); n.fx = n.x; n.fy = n.y })
+          .on('drag', function (ev, n) { n.fx = ev.x; n.fy = ev.y })
+          .on('end', function (ev, n) { if (!ev.active) sim.alphaTarget(0); n.fx = null; n.fy = null }))
+
+        // 选中变化时整图重建（小图代价可忽略，逻辑与静态版单一来源）。
+        return function () { try { sim.stop() } catch (e) {} try { svg.remove() } catch (e) {} }
+      }, [props.graph, props.d3, props.sel])
+      return h('div', { className: 'lw-d3', ref: ref })
+    }
+
     // ── 图谱：知识结构的力导向可视化 ──────────────────────────────────────
     //
     // 数据全部来自 /api/graph（节点带服务端算好的确定性坐标），客户端不跑
@@ -1944,6 +2230,18 @@ window.__ModuleLoader__.load({
       var msg = msgState[0], setMsg = msgState[1]
       var busyState = useState(false)
       var busy = busyState[0], setBusy = busyState[1]
+      // d3 交互模式：浏览器里按需注入 vendor UMD；失败/离线回落静态 SVG。
+      var d3State = useState(null)
+      var d3 = d3State[0], setD3 = d3State[1]
+      useEffect(function () {
+        if (controlled) return
+        loadVendorScript('/aico-local-wiki/vendor/d3.min.js?v=7')
+          .then(function (lib) { if (lib) setD3(lib) })
+      }, [controlled])
+      // 目录树跳转载荷：外部指定要选中的节点 id（图谱定位）。
+      useEffect(function () {
+        if (props.focusNode) setSel(props.focusNode)
+      }, [props.focusNode])
 
       var loadGraph = useCallback(function () {
         if (controlled) return
@@ -2047,7 +2345,10 @@ window.__ModuleLoader__.load({
           nodes.length === 0
             ? h('div', { className: 'lw-graph-empty' }, 'wiki 里还没有页面。')
             : h('div', { className: 'lw-graph-svgbox' },
-              h('svg', {
+              // d3 可用且非受控 → Neo4j 式交互图；否则静态 SVG（离线渲染/兜底）。
+              (d3 && !controlled)
+                ? h(D3Graph, { graph: graph, d3: d3, sel: sel, setSel: setSel })
+                : h('svg', {
                 className: 'lw-graph-svg',
                 viewBox: '0 0 ' + W + ' ' + H,
                 role: 'img',
@@ -2293,6 +2594,13 @@ window.__ModuleLoader__.load({
         setFocusId(id)
         setTab('knowledge')
       }, [setTab])
+      // 反向载荷：知识目录树 → 图谱定位（选中节点并展开抽屉）。
+      var focusNodeState = useState(null)
+      var focusNode = focusNodeState[0], setFocusNode = focusNodeState[1]
+      var onGotoGraph = useCallback(function (id) {
+        setFocusNode(id)
+        setTab('graph')
+      }, [setTab])
 
       var load = useCallback(function () {
         // 受控模式不发请求：离线渲染里没有 fetch，也不该去打扰真实端点。
@@ -2388,8 +2696,8 @@ window.__ModuleLoader__.load({
                   ? h('div', { className: 'lw-empty' }, '读取中…')
                   : tab === 'capabilities'
                     ? h(CapabilitiesTab, { state: state, onChanged: load, initialSeg: props.initialSeg })
-                    : tab === 'knowledge' ? h(KnowledgeTab, { state: state, onChanged: load, focusId: focusId })
-                      : tab === 'graph' ? h(GraphTab, { state: state, onChanged: load, onInspect: onInspect })
+                    : tab === 'knowledge' ? h(KnowledgeTab, { state: state, onChanged: load, focusId: focusId, onGotoGraph: onGotoGraph })
+                      : tab === 'graph' ? h(GraphTab, { state: state, onChanged: load, onInspect: onInspect, focusNode: focusNode })
                         : tab === 'triage' ? h(TriageTab, { onChanged: load })
                           : tab === 'models' ? h(ModelsTab, { state: state, onChanged: load })
                             : h(SupplyTab, { state: state, onChanged: load })
@@ -3373,6 +3681,7 @@ window.__ModuleLoader__.load({
       ModelsTab, ModelListEditor, HarvestSection,
       RecallCard, GraphTab,
       AicoWikiCenter, AicoPluginItem, AicoPluginSection,
+      D3Graph, KbTree, KbTreeNode,
     }
 
     /**
@@ -3388,6 +3697,8 @@ window.__ModuleLoader__.load({
       graphNodeRadius, graphLabelWorthy, graphLabelCut, graphEdgeStyle,
       // 二级界面（spec 05 重绘）的判据：观点句分段 / KPI 条目 / 导航徽标。
       titleParts, kpiItems, navBadge, NAVGROUPS,
+      // 溯源判据（spec 06 修订）：来源三形状归类。
+      sourceKind,
     }
 
     /**

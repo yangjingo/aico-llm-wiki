@@ -6,12 +6,25 @@ Input: 用户指示「基于 spec 的 design 配色，重置绘制插件的二�
 三版设计稿（A 胶片式 / B 目录导航 / C 页签精稿）供选后，按 spec 05 配色落地
 **B+A 混合骨架**（B 的目录导航 + A 的观点句标题与 KPI 数字带）。
 
-> **修订（2026-10-22，用户反馈）**：① 用户确认喜欢 B 方式；② **首页改为知识图谱**
+> **修订 1（2026-10-22，用户反馈）**：① 用户确认喜欢 B 方式；② **首页改为知识图谱**
 > ——TABS/导航以 graph 打头（KNOWLEDGE: 图谱/知识/分拣；OPERATION: 补料/能力/模型，
 > 取消 OVERVIEW 组），PanelBody 与 AicoWikiCenter 默认页签、命令默认 entryTab 均为 graph；
 > ③ **KPI 状态带复用原 repo 的状态设计**——直接采用 CLS 表（label + StateDot state +
 > c-类），条目=已固化/待固化/已确认/未确认（并入新页，KFILTERS 语义）/有反证
 > （疑似有害+观察中合并，error 点）/死知识；一个状态在任何视图里长得一样。
+>
+> **修订 2（2026-10-25，用户反馈）**：① 首页图谱升级为 **Neo4j Browser 风格交互图**
+> ——三方包 d3 v7（UMMD 280KB vendor 进 client/vendor/，经宿主静态路由
+> /aico-local-wiki/vendor/* 注入，零构建约束不变）：forceSimulation + 缩放平移 +
+> 节点拖拽 + 悬停/选中邻居高亮（灰化其它）；d3 拥有 svg 子树，选中态回写 React
+> state 复用抽屉/固化/跳转；加载失败或离线渲染自动回落静态 SVG。
+> ② **知识库目录树**：/api/tree 返回 pages/·staged/ 目录结构，知识页签左侧
+> 文件浏览器式目录树（分类色点 + 折叠 + 计数），点击=打开该页详情，
+> 「图」按钮=跳图谱定位（PanelBody focusNode 载荷，与图谱→知识跳转对称）。
+> ③ **溯源（provenance）**：/api/state 的 committed/staged 带回 srcs 数组
+> （前 8 条）；sourceKind() 把来源归为三形状——session://（会话锚点，harvest
+> 永远附）/ URL（链接）/ 其余（文档路径）；知识表格新增「来源」列（chips 短显
+> + title 全量 + URL 可点开），PageDetail 来源列表带类型徽标（红/灰蓝/蓝）。
 
 ## 骨架（替换原横向页签条）
 

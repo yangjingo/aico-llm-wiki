@@ -18,7 +18,7 @@ import {
   listTriage, readTriageBody, restoreTriage, discardTriage,
 } from './lib/wiki.js'
 import { readFile, writeFile, unlink, stat } from 'node:fs/promises'
-import { join } from 'node:path'
+import { join, resolve as pathResolve, sep } from 'node:path'
 import { buildCorpus, scoreQuery, triage, recallable, looksLikeGap } from './lib/recall.js'
 import { appendGap, runAcquisition, readGaps } from './lib/acquire.js'
 import { createLlm, SITES, SITE_LABEL, normalizeLlmConfig } from './lib/llm.js'
@@ -39,6 +39,20 @@ import { createHindsightCompactor } from './lib/hindsight-compact.js'
 import { createPreStepOrder } from './lib/pre-step-order.js'
 import { registerTools } from './lib/tools.js'
 import { buildGraph, graphLayout } from './lib/graph.js'
+import { fileURLToPath } from 'node:url'
+import { dirname as pathDirname } from 'node:path'
+
+// 插件自带静态资源（client/vendor/，如 d3 UMD）：
+// /aico-local-wiki/vendor/<file> 只允许落在 vendor 目录内。
+const VENDOR_DIR = join(pathDirname(fileURLToPath(import.meta.url)), 'client', 'vendor')
+const VENDOR_MIME = { '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.map': 'application/json' }
+
+function resolveWithin(root, rel) {
+  const p = join(root, rel.replace(/^[/\\]+/, ''))
+  const normalizedRoot = pathResolve(root) + sep
+  if (!pathResolve(p).startsWith(normalizedRoot)) return null
+  return pathResolve(p)
+}
 
 export const name = 'aico-local-wiki'
 export const inject = ['tools', 'llm', 'web', 'webServer']
@@ -449,6 +463,56 @@ let compactVerityLogged = false
           return
         }
 
+        // ── 静态资源：client/vendor/*（三方 UMD，如 d3）──
+        //
+        // 只允许落在 vendor 目录内（resolveWithin 判越界）；MIME 白名单。
+        // 缓存 1 天：带版本查询参数即可强更（?v=<package version>）。
+        if (url.pathname.startsWith('/aico-local-wiki/vendor/') && req.method === 'GET') {
+          const rel = url.pathname.slice('/aico-local-wiki/vendor/'.length)
+          const file = resolveWithin(VENDOR_DIR, rel)
+          const ext = file ? file.slice(file.lastIndexOf('.')) : ''
+          if (!file || !VENDOR_MIME[ext]) { send(404, { ok: false, error: 'not found' }); return }
+          try {
+            const buf = await readFile(file)
+            res.writeHead(200, { 'content-type': VENDOR_MIME[ext], 'cache-control': 'public, max-age=86400' })
+            res.end(buf)
+            return
+          } catch (e) {
+            send(404, { ok: false, error: 'not found' }); return
+          }
+        }
+
+        // ── 目录树：知识库按本地目录结构浏览（跳转/打开的导航数据源）──
+        //
+        // 返回 pages/<category>/<file> 与 staged/<file> 的树形结构，
+        // 每个叶子带 id/title/category——前端点击即可打开对应页面详情。
+        if (url.pathname === '/aico-local-wiki/api/tree' && req.method === 'GET') {
+          const { pages } = await loadPages(cfg.wikiRoot)
+          const relOf = (p) => {
+            const abs = String(p.path ?? '')
+            const i = abs.lastIndexOf('pages')
+            const j = abs.lastIndexOf('staged')
+            const k = Math.max(i, j)
+            return k >= 0 ? abs.slice(k) : abs
+          }
+          const tree = {}
+          for (const p of pages) {
+            const rel = relOf(p).replace(/\\/g, '/')
+            const segs = rel.split('/')
+            let node = tree
+            for (let s = 0; s < segs.length - 1; s++) {
+              node[segs[s]] ??= {}
+              node = node[segs[s]]
+            }
+            node[segs[segs.length - 1]] = {
+              __leaf: true, id: p.id, title: p.title ?? p.id,
+              category: p.category ?? 'fact', status: p.status ?? 'committed',
+            }
+          }
+          send(200, { ok: true, ts: new Date().toISOString(), tree })
+          return
+        }
+
         // ── 读路径 3.5：知识图谱（节点 + 边）──
         //
         // 刻意不并进 /api/state：建图要遍历全部页面与共现账本，而 state
@@ -701,6 +765,9 @@ let compactVerityLogged = false
             created: p.created ?? null,
             updated: p.updated ?? p.created ?? null,
             sources: (p.sources ?? []).length,
+            // 溯源（spec 06 修订）：dashboard 要能看到知识从哪来——
+            // 会话锚点（session://）/ 文档路径 / URL。只带前 8 条防长尾页撑爆轮询。
+            srcs: (p.sources ?? []).slice(0, 8).map(String),
             cls: classify(st, p, { now, policy }),
             hits: st?.hits ?? 0, confirmed: st?.confirmed ?? 0, suspect: st?.suspect ?? 0,
             factor: Number(reinforcementFactor(st, now).toFixed(3)),
@@ -712,6 +779,7 @@ let compactVerityLogged = false
         const staged = pages.filter(p => p.status === 'staged').map(p => ({
           id: p.id, title: p.title, category: p.category, confidence: p.confidence,
           sources: (p.sources ?? []).length,
+          srcs: (p.sources ?? []).slice(0, 8).map(String),
           blockers: commitReadiness(p).blockers ?? [],
         }))
         const counts = {}
@@ -811,7 +879,7 @@ let compactVerityLogged = false
     // 覆盖清单**手写**在这里，所以它会随着加端点而过时 —— 实测就过时过一次
     // （加了 models/llm/harvest 之后这行还在报旧的六条）。日志说假话比不写更糟，
     // 所以清单与路由放在一起，加路由时顺手改。
-    log('ui: /aico-local-wiki 已注册（prefix，覆盖 api/state|page|graph|commit|capabilities|pending|triage|models|llm|harvest）')
+    log('ui: /aico-local-wiki 已注册（prefix，覆盖 api/state|page|graph|tree|vendor|commit|capabilities|pending|triage|models|llm|harvest）')
     return () => { try { dispose() } catch {} }
   }, 'aico-local-wiki: ui route')
 
