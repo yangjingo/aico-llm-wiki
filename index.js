@@ -100,7 +100,10 @@ function buildUserMessage(text, source) {
  * 不解析 ^（遇到返回 null「判不了」），而判据必须以 node-semver 为准：
  * 0.1.0 元组的 rc 版（如 0.1.0-rc.8）不满足 ^0.1.5-rc.1，pnpm 会因此另装旧副本。
  */
-const HOST_RANGE = '>=0.1.5-rc.1 <0.2.0-0'
+// 配套升级（v0.6.0，2026-10-25）：peer 与宿主对齐 0.2.1-rc.3，
+// 不再依赖 --accept-risk 豁免。tools.restrict 在 0.2.1 宿主缺失，
+// capabilities.js 已有运行时守卫（缺则跳过），compat 清单降为观察项。
+const HOST_RANGE = '>=0.2.1-rc.3 <0.3.0-0'
 
 function delegationDepth(agent) {
   try {
