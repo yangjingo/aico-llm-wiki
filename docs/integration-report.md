@@ -70,6 +70,23 @@ dsh plugin --profile desktop add link:D:\myCode\agent\aiCo\aico-local-wiki
 
 **预防**：每次 bump package.json version 后，同步重授豁免（进发布流程）。
 
+## 3.6 事故记录 3：plugin remove 会删 bundles 条目，add link 不回填（2026-10-26）
+
+**现象**：升级重装（remove + add link）后，新启动的实例全部 404；
+`dependencies` 里有 aico-local-wiki（link 正常），但 profile
+`package.json` 的 `dsh.profile.bundles` 数组里**没有**它——bundle 声明
+缺失 → 宿主不装载 → apply 不跑（插件日志无新行）。
+
+**根因**：`dsh plugin remove` 同时从 dependencies 和 bundles 移除；
+`dsh plugin add link:...` 只回填 dependencies，**不回填 bundles**
+（首次安装的 add 是带 bundles 的；remove/add 循环后字段就丢了）。
+
+**判据与修复**：
+1. 路由 404 且插件日志无新行 → 先查
+   `profiles/desktop/package.json` 的 `bundles` 是否含本插件；
+2. 手动把 `"aico-local-wiki"` 加回 bundles 数组，重启实例；
+3. ⚠️ 重装插件的标准动作：`remove` → `add link:` → **检查 bundles 回填**。
+
 ## 4. Post-restart verification
 
 重启桌面应用后按序验证：
