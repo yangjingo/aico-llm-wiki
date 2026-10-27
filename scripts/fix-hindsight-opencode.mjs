@@ -14,7 +14,7 @@ const DESIRED = {
   HINDSIGHT_API_LLM_BASE_URL: 'https://opencode.ai/zen/v1',
   HINDSIGHT_API_LLM_MODEL: 'nemotron-3-ultra-free',
   HINDSIGHT_API_LLM_API_KEY: KEY,
-  HINDSIGHT_API_LLM_DEFAULT_HEADERS: '{"x-session-id":"aico-local-wiki"}',
+  HINDSIGHT_API_LLM_DEFAULT_HEADERS: '{"x-session-id":"aico-llm-wiki"}',
 }
 
 let lines = (await readFile(embedPath, 'utf8')).split(/\r?\n/)

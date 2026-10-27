@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>知识图谱 Graph View · aico-local-wiki</title>
+  <title>知识图谱 Graph View · aico-llm-wiki</title>
   <style>
     :root {
       --bg: #0e0c0d;
@@ -408,7 +408,7 @@
   <div class="progress"><div class="progress-bar"></div></div>
 
   <header class="topbar">
-    <div class="brand"><span class="mark"></span> aico-local-wiki · graph-view</div>
+    <div class="brand"><span class="mark"></span> aico-llm-wiki · graph-view</div>
     <button class="btn-icon btn-overview" type="button">总览</button>
     <div class="counter">01 / 10</div>
   </header>
@@ -418,7 +418,7 @@
     <section class="slide active" data-title="封面">
       <div class="slide-inner cover-grid">
         <div>
-          <p class="eyebrow reveal" style="--d:.02s">aico-local-wiki · 功能特性介绍</p>
+          <p class="eyebrow reveal" style="--d:.02s">aico-llm-wiki · 功能特性介绍</p>
           <h1 class="h1 reveal" style="--d:.1s">知识图谱：<span class="hl">让知识库的结构可见</span></h1>
           <p class="sub reveal" style="--d:.18s">哪些知识成群、哪些总是一起被需要、哪些孤立无人引用——<span class="hl">一张图看穿</span>。</p>
           <div class="cover-meta reveal" style="--d:.28s">
@@ -450,7 +450,7 @@
         </div>
         <div class="col-visual reveal" style="--d:.18s">
           <div class="feature-card">
-            <div class="fc-bar"><span class="fc-dot r"></span><span class="fc-dot"></span><span class="fc-dot"></span><span class="fc-title">GET /aico-local-wiki/api/graph</span></div>
+            <div class="fc-bar"><span class="fc-dot r"></span><span class="fc-dot"></span><span class="fc-dot"></span><span class="fc-title">GET /aico-llm-wiki/api/graph</span></div>
             <div class="fc-body">
               <span class="fc-out">// 节点带服务端算好的坐标下发</span><br>
               { <span class="fc-key">"nodes"</span>: [ { id, label, <span class="fc-cmd">x, y</span>, degree } ],<br>
@@ -575,7 +575,7 @@
             </div>
           </div>
           <div class="col-visual">
-            <p class="sub reveal" style="--d:.14s;font-size:16px;margin-bottom:14px;"><span class="hl" style="font-family:var(--mono);">Client 侧 HTTP API</span> · /aico-local-wiki/api/*（DSH Web UI 调用）</p>
+            <p class="sub reveal" style="--d:.14s;font-size:16px;margin-bottom:14px;"><span class="hl" style="font-family:var(--mono);">Client 侧 HTTP API</span> · /aico-llm-wiki/api/*（DSH Web UI 调用）</p>
             <div class="feature-card reveal" style="--d:.22s;">
               <div class="fc-bar"><span class="fc-dot r"></span><span class="fc-dot"></span><span class="fc-dot"></span><span class="fc-title">index.js 注册 · state|page|graph|tree|commit|…</span></div>
               <div class="fc-body">

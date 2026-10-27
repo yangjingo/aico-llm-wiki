@@ -12,7 +12,7 @@ Input: 用户指示「入口参考 aida-lld：通过 aico-wiki 进入工作台�
 > 键盘必须有独立退路）。z-index 刻意低于侧栏模态（.lw-mask 9000），
 > 后备模态入口仍可用。**agent 侧工具与 HTTP 接口注册在宿主进程，
 > 不受 UI 接管影响**——wiki_recall / wiki_learn / wiki_commit 及
-> /aico-local-wiki/api/* 在接管期间照常可调。
+> /aico-llm-wiki/api/* 在接管期间照常可调。
 
 ## 决定
 
@@ -48,4 +48,4 @@ Input: 用户指示「入口参考 aida-lld：通过 aico-wiki 进入工作台�
 ## 已知边界
 
 - 重启宿主后生效（client 模块随 profile 加载）。
-- `subject.pkg.name` 判据绑定包名 `aico-local-wiki`——再改名要同步这里。
+- `subject.pkg.name` 判据绑定包名 `aico-llm-wiki`——再改名要同步这里。

@@ -1,4 +1,4 @@
-// aico-local-wiki —— DSH 的「边做边学」知识库插件。
+// aico-llm-wiki —— DSH 的「边做边学」知识库插件。
 //
 // 三条设计铁律（来自架构评审）：
 //   1. 自动的不阻塞，阻塞的必须显式。
@@ -45,7 +45,7 @@ import { fileURLToPath } from 'node:url'
 import { dirname as pathDirname } from 'node:path'
 
 // 插件自带静态资源（client/vendor/，如 d3 UMD）：
-// /aico-local-wiki/vendor/<file> 只允许落在 vendor 目录内。
+// /aico-llm-wiki/vendor/<file> 只允许落在 vendor 目录内。
 const VENDOR_DIR = join(pathDirname(fileURLToPath(import.meta.url)), 'client', 'vendor')
 const VENDOR_MIME = { '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.map': 'application/json' }
 
@@ -120,7 +120,7 @@ function openLocalDoc(file, page) {
   }
 }
 
-export const name = 'aico-local-wiki'
+export const name = 'aico-llm-wiki'
 export const inject = ['tools', 'llm', 'web', 'webServer']
 
 /**
@@ -133,7 +133,7 @@ function buildUserMessage(text, source) {
   try {
     if (typeof hostCreateUserMessage === 'function') return hostCreateUserMessage(payload)
   } catch (e) {
-    console.warn('[aico-local-wiki] createUserMessage failed, using minimal shape:', e?.message ?? e)
+    console.warn('[aico-llm-wiki] createUserMessage failed, using minimal shape:', e?.message ?? e)
   }
   return { role: 'user', ...payload }
 }
@@ -420,14 +420,14 @@ let compactVerityLogged = false
     // 传 getCfg 而不是快照：每次工具调用都重读配置，wiki.config.json 热生效
     const dispose = registerTools(ctx, { getCfg, llm, caps, log, trace })
     return () => { try { dispose() } catch { /* noop */ } }
-  }, 'aico-local-wiki: tools')
+  }, 'aico-llm-wiki: tools')
 
   // ── 系统提示词：告知模型这套能力的存在 ──
   ctx.inject(['systemPrompt'], (promptCtx) => {
     promptCtx.systemPrompt.section({
-      name: 'app:aico-local-wiki',
+      name: 'app:aico-llm-wiki',
       order: -95,
-      text: () => 'The aico-local-wiki plugin maintains a curated Markdown knowledge base (L1) of durable project knowledge. '
+      text: () => 'The aico-llm-wiki plugin maintains a curated Markdown knowledge base (L1) of durable project knowledge. '
         + 'Relevant pages are injected automatically before a turn when they exist. '
         + 'Use wiki_recall to explicitly search it before answering project questions; '
         + 'use wiki_learn to record durable, non-obvious findings (always with sources); '
@@ -482,7 +482,7 @@ let compactVerityLogged = false
 
         // ── 写路径 1：改能力包配置 ──
         // 写进 <wikiRoot>/wiki.config.json（可 git、可手改），下次装配即生效。
-        if (url.pathname === '/aico-local-wiki/api/capabilities' && req.method === 'POST') {
+        if (url.pathname === '/aico-llm-wiki/api/capabilities' && req.method === 'POST') {
           const body = await readBody()
           if (!body || !Array.isArray(body.explicitOnly)) { send(400, { ok: false, error: '需要 { explicitOnly: string[] }' }); return }
           const cfgPath = join(cfg.wikiRoot, 'wiki.config.json')
@@ -503,7 +503,7 @@ let compactVerityLogged = false
 
         // ── 写路径 2：commit 一个暂存页 ──
         // 复用与 wiki_commit 工具同一套闸门（无 sources 不许 commit）。
-        if (url.pathname === '/aico-local-wiki/api/commit' && req.method === 'POST') {
+        if (url.pathname === '/aico-llm-wiki/api/commit' && req.method === 'POST') {
           const body = await readBody()
           const id = body && body.id
           if (!id) { send(400, { ok: false, error: '需要 { id }' }); return }
@@ -524,7 +524,7 @@ let compactVerityLogged = false
         // 校验目标目录存在；新库（空目录）由 ensureRepo 铺骨架。
         // 选择写进 <baseRoot>/.active-root.json，重启后依然生效；
         // 改回 baseRoot（传 { reset: true }）即恢复宿主配置的默认库。
-        if (url.pathname === '/aico-local-wiki/api/switch-root' && req.method === 'POST') {
+        if (url.pathname === '/aico-llm-wiki/api/switch-root' && req.method === 'POST') {
           const body = await readBody()
           if (body?.reset) {
             rootOverride = null
@@ -557,7 +557,7 @@ let compactVerityLogged = false
         // ── 写路径 2.5：打开本地源文档（证据一键跳转）──
         // 前端的来源 chip 点击后打到这条。只接受本地已存在的文件路径；
         // session:// 与 http(s) 一律 400 —— 网页链接前端自己就能开新标签。
-        if (url.pathname === '/aico-local-wiki/api/open-doc' && req.method === 'POST') {
+        if (url.pathname === '/aico-llm-wiki/api/open-doc' && req.method === 'POST') {
           const body = await readBody()
           const raw = String(body?.path ?? '').trim()
           const page = Math.max(0, Math.floor(Number(body?.page) || 0))
@@ -576,7 +576,7 @@ let compactVerityLogged = false
         // ── 读路径 3：单页正文 ──
         // 列表刻意不带正文：八页正文几十 KB，每次轮询都传一遍是浪费。
         // 展开某一行时才按 id 取一次——这是"行是活的、列是死的"能成立的前提。
-        if (url.pathname === '/aico-local-wiki/api/page' && req.method === 'GET') {
+        if (url.pathname === '/aico-llm-wiki/api/page' && req.method === 'GET') {
           const id = url.searchParams.get('id') || ''
           if (!id) { send(400, { ok: false, error: '需要 ?id=' }); return }
           const { pages } = await loadPages(cfg.wikiRoot)
@@ -606,8 +606,8 @@ let compactVerityLogged = false
         //
         // 只允许落在 vendor 目录内（resolveWithin 判越界）；MIME 白名单。
         // 缓存 1 天：带版本查询参数即可强更（?v=<package version>）。
-        if (url.pathname.startsWith('/aico-local-wiki/vendor/') && req.method === 'GET') {
-          const rel = url.pathname.slice('/aico-local-wiki/vendor/'.length)
+        if (url.pathname.startsWith('/aico-llm-wiki/vendor/') && req.method === 'GET') {
+          const rel = url.pathname.slice('/aico-llm-wiki/vendor/'.length)
           const file = resolveWithin(VENDOR_DIR, rel)
           const ext = file ? file.slice(file.lastIndexOf('.')) : ''
           if (!file || !VENDOR_MIME[ext]) { send(404, { ok: false, error: 'not found' }); return }
@@ -625,7 +625,7 @@ let compactVerityLogged = false
         //
         // 返回 pages/<category>/<file> 与 staged/<file> 的树形结构，
         // 每个叶子带 id/title/category——前端点击即可打开对应页面详情。
-        if (url.pathname === '/aico-local-wiki/api/tree' && req.method === 'GET') {
+        if (url.pathname === '/aico-llm-wiki/api/tree' && req.method === 'GET') {
           const { pages } = await loadPages(cfg.wikiRoot)
           const relOf = (p) => {
             const abs = String(p.path ?? '')
@@ -657,7 +657,7 @@ let compactVerityLogged = false
         // 刻意不并进 /api/state：建图要遍历全部页面与共现账本，而 state
         // 每 8 秒被轮询一次。图谱页签打开时才取这一条，取一次画一次。
         // 节点不带正文（与 /api/page 同一取舍：列表轻、正文按需取）。
-        if (url.pathname === '/aico-local-wiki/api/graph' && req.method === 'GET') {
+        if (url.pathname === '/aico-llm-wiki/api/graph' && req.method === 'GET') {
           const { pages } = await loadPages(cfg.wikiRoot)
           const usage = await loadUsage(cfg.wikiRoot)
           const maxEdges = Number(url.searchParams.get('maxEdges')) || 300
@@ -676,7 +676,7 @@ let compactVerityLogged = false
         // 使用账本、缺口队列、挣扎记录都读一遍再返回。输入框上方那条提示条是
         // **常驻**的，让它每 30 秒触发一次全库读取，就是拿用户的磁盘换一个数字。
         // 这里只读 staged/ 的 frontmatter 并数两个目录。
-        if (url.pathname === '/aico-local-wiki/api/pending' && req.method === 'GET') {
+        if (url.pathname === '/aico-llm-wiki/api/pending' && req.method === 'GET') {
           const brief = await readStagedBrief(cfg.wikiRoot)
           const triageCounts = await countTriage(cfg.wikiRoot)
           const items = brief.map(p => {
@@ -705,7 +705,7 @@ let compactVerityLogged = false
         // 这两类条目原先**没有任何界面**，只能靠读文件分拣。而它们恰恰是最需要
         // 看内容才能决定的东西，所以列表带摘录、全文按需另取（与知识页签同一个
         // 取舍：列表不带正文，八篇正文几十 KB 每次轮询都传一遍是浪费）。
-        if (url.pathname === '/aico-local-wiki/api/triage' && req.method === 'GET') {
+        if (url.pathname === '/aico-llm-wiki/api/triage' && req.method === 'GET') {
           const one = url.searchParams.get('rel')
           if (one) {
             const r0 = await readTriageBody(cfg.wikiRoot, one)
@@ -716,7 +716,7 @@ let compactVerityLogged = false
           return
         }
 
-        if (url.pathname === '/aico-local-wiki/api/triage' && req.method === 'POST') {
+        if (url.pathname === '/aico-llm-wiki/api/triage' && req.method === 'POST') {
           const body = await readBody()
           const action = body && body.action
           const rel = body && body.rel
@@ -741,7 +741,7 @@ let compactVerityLogged = false
         //
         // 刻意**不**并进 /api/state：那条路径每 8 秒被轮询一次，而列模型
         // 可能打网络（适配器自己决定）。界面只在打开「模型」页签时取一次。
-        if (url.pathname === '/aico-local-wiki/api/models' && req.method === 'GET') {
+        if (url.pathname === '/aico-llm-wiki/api/models' && req.method === 'GET') {
           const regs = (typeof ctx.llm?.listProviders === 'function' ? ctx.llm.listProviders() : []) ?? []
           const providers = []
           for (const p of regs) {
@@ -768,7 +768,7 @@ let compactVerityLogged = false
         // ── 写路径 3：改模型配置 ──
         // 与能力包同一套做法：写进 <wikiRoot>/wiki.config.json，可 git、可手改。
         // 与能力包**不同的**一点：改完立刻生效，不用重载 —— createLlm 每次调用重读。
-        if (url.pathname === '/aico-local-wiki/api/llm' && req.method === 'POST') {
+        if (url.pathname === '/aico-llm-wiki/api/llm' && req.method === 'POST') {
           const body = await readBody()
           if (!body || typeof body !== 'object') { send(400, { ok: false, error: '需要 JSON 体' }); return }
           const cfgPath = join(cfg.wikiRoot, 'wiki.config.json')
@@ -796,7 +796,7 @@ let compactVerityLogged = false
         //
         // 与 wiki_harvest 工具**同一份实现**：runHarvest 取材 + stageHarvestItems 落盘。
         // 落盘仍然只到 staged/ —— 按钮不是免检通道，固化照样要人去点。
-        if (url.pathname === '/aico-local-wiki/api/harvest' && req.method === 'POST') {
+        if (url.pathname === '/aico-llm-wiki/api/harvest' && req.method === 'POST') {
           if (harvesting) { send(409, { ok: false, error: '上一次提炼还在跑，等它结束再点' }); return }
           const body = (await readBody()) ?? {}
           harvesting = true
@@ -882,10 +882,10 @@ let compactVerityLogged = false
         // 这个项目已经三次栽在路由匹配上（exact vs prefix、prefix 尾斜杠、路径进不来），
         // 而每一次前端看到的都只是一句 "not found" —— 于是只能反推，反推又猜错。
         // 把收到的 method 与 pathname 原样回给前端、同时记进日志：
-        //   * 客户端拿到 "not found（收到 GET /aico-local-wiki/api/models）" 时，
+        //   * 客户端拿到 "not found（收到 GET /aico-llm-wiki/api/models）" 时，
         //     一眼就能分清"服务端没有这条路由"和"路由在、判据没命中"；
         //   * 日志里有它，就不必再靠界面复现。
-        if (url.pathname !== '/aico-local-wiki/api/state') {
+        if (url.pathname !== '/aico-llm-wiki/api/state') {
           const saw = { method: String(req.method ?? ''), pathname: String(url.pathname ?? '') }
           log('ui: 未匹配的请求 ' + saw.method + ' ' + saw.pathname + '（已注册的路由见上面那行覆盖清单）')
           send(404, { ok: false, error: 'not found', saw })
@@ -1010,17 +1010,17 @@ let compactVerityLogged = false
     //
     // path **不能带尾斜杠**。宿主（dsh-host-webserver/lib/index.js:199）的匹配是：
     //     if (pathname !== prefix && !pathname.startsWith(prefix + '/')) continue
-    // 也就是它拿 prefix 和 prefix+'/' 两种形态去比。写成 '/aico-local-wiki/' 之后
-    // 它会去找 '/aico-local-wiki//api/state'——永远不匹配，请求落到 SPA 兜底路由，
+    // 也就是它拿 prefix 和 prefix+'/' 两种形态去比。写成 '/aico-llm-wiki/' 之后
+    // 它会去找 '/aico-llm-wiki//api/state'——永远不匹配，请求落到 SPA 兜底路由，
     // 前端拿到 index.html（**HTTP 200**，content-type: text/html）。
     // 这个比 404 更难查：状态码是成功的。
-    const dispose = ctx.webServer.register({ kind: 'prefix', path: '/aico-local-wiki', handler })
+    const dispose = ctx.webServer.register({ kind: 'prefix', path: '/aico-llm-wiki', handler })
     // 覆盖清单**手写**在这里，所以它会随着加端点而过时 —— 实测就过时过一次
     // （加了 models/llm/harvest 之后这行还在报旧的六条）。日志说假话比不写更糟，
     // 所以清单与路由放在一起，加路由时顺手改。
-    log('ui: /aico-local-wiki 已注册（prefix，覆盖 api/state|page|graph|tree|vendor|commit|capabilities|pending|triage|models|llm|harvest）')
+    log('ui: /aico-llm-wiki 已注册（prefix，覆盖 api/state|page|graph|tree|vendor|commit|capabilities|pending|triage|models|llm|harvest）')
     return () => { try { dispose() } catch {} }
-  }, 'aico-local-wiki: ui route')
+  }, 'aico-llm-wiki: ui route')
 
   // ── 能力包装配 ──
   // agent/created 在作用域 setup 之后、驱动器启动之前触发，

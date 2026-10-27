@@ -1,8 +1,8 @@
 > 本文件是上游详细 README 的归档（2026-10 归档）。日常文档见 [../README.md](../README.md)。
 
-# aico-local-wiki
+# aico-llm-wiki
 
-> aiCo 的本地 wiki 插件。fork 自 [Dayi-Z/dsh-learn-wiki](https://github.com/Dayi-Z/dsh-learn-wiki)（v0.3.1，`1d20bd5`），在此基线上继续开发。源码位置：`D:\myCode\agent\aiCo\aico-local-wiki`，以 `link:` 方式安装在 DSH **desktop** profile（⚠️ 桌面宿主用的是 desktop profile，不是 web）。
+> aiCo 的本地 wiki 插件。fork 自 [Dayi-Z/dsh-learn-wiki](https://github.com/Dayi-Z/dsh-learn-wiki)（v0.3.1，`1d20bd5`），在此基线上继续开发。源码位置：`D:\myCode\agent\aiCo\aico-llm-wiki`，以 `link:` 方式安装在 DSH **desktop** profile（⚠️ 桌面宿主用的是 desktop profile，不是 web）。
 
 DSH 的「边做边学」知识库插件：**工作前自动检索 → 卡住时后台限流联网补料 → 蒸馏落暂存 → 两段式 commit 升入知识库 → 下次自动命中**。
 
@@ -10,7 +10,7 @@ DSH 的「边做边学」知识库插件：**工作前自动检索 → 卡住时
 
 ## aiCo 的改动（相对上游）
 
-- **图谱页签**：莫兰迪配色 + 酒红画底的知识图谱（节点=页面，实线=共召回 co，虚线=共享标签 tag），点选联动抽屉/固化/知识页签跳转（`lib/graph.js` + `/aico-local-wiki/api/graph`）
+- **图谱页签**：莫兰迪配色 + 酒红画底的知识图谱（节点=页面，实线=共召回 co，虚线=共享标签 tag），点选联动抽屉/固化/知识页签跳转（`lib/graph.js` + `/aico-llm-wiki/api/graph`）
 - **收编更名**：v0.4.0 起为 aiCo 自有插件（详见 [docs/spec/](docs/spec/)）
 
 ## 文档导航（docs/，对齐 aida-lld 规范）

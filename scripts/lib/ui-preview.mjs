@@ -68,7 +68,7 @@ export function buildDocument({ view, markup, pluginCss, tokens, tokenNote, mode
     '<html lang="zh" data-mode="' + mode + '">',
     '<head>',
     '<meta charset="utf-8">',
-    '<title>aico-local-wiki — ' + view.title + '</title>',
+    '<title>aico-llm-wiki — ' + view.title + '</title>',
     '<style>',
     tokens,
     pluginCss,

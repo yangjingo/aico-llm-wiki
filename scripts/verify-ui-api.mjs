@@ -25,33 +25,33 @@ const mod = await import('../index.js')
 mod.apply(ctxLike, { wikiRoot: ROOT })
 
 check('声明了 webServer 依赖', mod.inject.includes('webServer'), JSON.stringify(mod.inject))
-// ★ 这条断言是补上来的：曾经注册成 kind:'exact' + '/aico-local-wiki/api/state'，
+// ★ 这条断言是补上来的：曾经注册成 kind:'exact' + '/aico-llm-wiki/api/state'，
 // 于是 /api/page 根本进不到 handler，前端拿到 404 HTML 才炸出 JSON 解析错误。
 // 旧测试直接调 route.handler，绕过了路由匹配，所以完全测不出来——
 // 又一次印证：自建的测试替身永远比真实边界松。
 check('★ 路由用 prefix 注册（否则 /api/page 根本到不了 handler）',
-  route !== null && route.kind === 'prefix' && route.path === '/aico-local-wiki',
+  route !== null && route.kind === 'prefix' && route.path === '/aico-llm-wiki',
   JSON.stringify(route && { kind: route.kind, path: route.path }))
 
 // ★ 光断言 kind/path 的**值**还不够——紧接着就又栽了一次：
-// path 写成 '/aico-local-wiki/'（多个尾斜杠），kind 和 path 看上去都对，
+// path 写成 '/aico-llm-wiki/'（多个尾斜杠），kind 和 path 看上去都对，
 // 但宿主的匹配规则是
 //     if (pathname !== prefix && !pathname.startsWith(prefix + '/')) continue
 // （照抄 dsh-host-webserver/lib/index.js:199），它拿 prefix 和 prefix+'/' 去比，
-// 于是 '/aico-local-wiki/' 会去找 '/aico-local-wiki//api/state' —— 永远不匹配。
+// 于是 '/aico-llm-wiki/' 会去找 '/aico-llm-wiki//api/state' —— 永远不匹配。
 // 请求落到 SPA 兜底路由，前端拿到 index.html，而且是 **HTTP 200**，
 // 比 404 更难查（状态码是成功的，只有 content-type 露馅）。
 //
 // 所以这里照抄真实匹配规则，逐条验证**每条 API 路径都进得来**。
 const matchesPrefix = (prefix, pathname) => pathname === prefix || pathname.startsWith(prefix + '/')
 const API_PATHS = [
-  '/aico-local-wiki/api/state', '/aico-local-wiki/api/page',
-  '/aico-local-wiki/api/commit', '/aico-local-wiki/api/capabilities',
-  '/aico-local-wiki/api/pending', '/aico-local-wiki/api/triage',
+  '/aico-llm-wiki/api/state', '/aico-llm-wiki/api/page',
+  '/aico-llm-wiki/api/commit', '/aico-llm-wiki/api/capabilities',
+  '/aico-llm-wiki/api/pending', '/aico-llm-wiki/api/triage',
   // 模型目录是**单独一条**端点而不是并进 /api/state：列 provider/模型可能打网络，
   // 而 /api/state 每 8 秒被轮询一次。新加一条路径就得来这里加一行 —— 这条断言
   // 存在的意义正是"漏注册就红"。
-  '/aico-local-wiki/api/models', '/aico-local-wiki/api/llm', '/aico-local-wiki/api/harvest',
+  '/aico-llm-wiki/api/models', '/aico-llm-wiki/api/llm', '/aico-llm-wiki/api/harvest',
 ]
 const regd = route && route.kind === 'prefix' ? route.path : null
 const unmatched = API_PATHS.filter(p => !(regd !== null && matchesPrefix(regd, p)))
@@ -70,7 +70,7 @@ function call(pathname) {
   })
 }
 
-const ok = await call('/aico-local-wiki/api/state')
+const ok = await call('/aico-llm-wiki/api/state')
 check('返回 200', ok.code === 200, 'code=' + ok.code + (ok.code !== 200 ? '  body=' + String(ok.body).slice(0, 300) : ''))
 
 let payload = null
@@ -141,7 +141,7 @@ if (payload) {
 //      一按却全被 409 拒掉 —— 那比不显示还糟。
 //   2. 体量：这条路径每 30 秒跑一次，不能顺手把整个知识库读一遍。
 {
-  const pend = await call('/aico-local-wiki/api/pending')
+  const pend = await call('/aico-llm-wiki/api/pending')
   check('pending 返回 200', pend.code === 200, 'code=' + pend.code + (pend.code !== 200 ? ' body=' + String(pend.body).slice(0, 200) : ''))
   let pj = null
   try { pj = JSON.parse(pend.body) } catch (e) { check('pending 响应是合法 JSON', false, e.message) }
@@ -199,7 +199,7 @@ if (payload) {
 
 // ── 分拣接口（读路径走真实 wiki，写路径在下面的临时仓库上测）──
 {
-  const t = await call('/aico-local-wiki/api/triage')
+  const t = await call('/aico-llm-wiki/api/triage')
   check('triage 返回 200', t.code === 200, 'code=' + t.code)
   let tj = null
   try { tj = JSON.parse(t.body) } catch (e) { check('triage 响应是合法 JSON', false, e.message) }
@@ -229,14 +229,14 @@ if (payload) {
       '.trash/../../pages/fact/schema-e86e06.md', '/etc/passwd', '.trashfoo/x.md']
     let leaked = []
     for (const a of attacks) {
-      const rr = await call('/aico-local-wiki/api/triage?rel=' + encodeURIComponent(a))
+      const rr = await call('/aico-llm-wiki/api/triage?rel=' + encodeURIComponent(a))
       if (rr.code === 200) leaked.push(a)
     }
     check('★ 路径穿越被挡住（读单条也不许越界）', leaked.length === 0, leaked.join(', '))
   }
 }
 
-const nf = await call('/aico-local-wiki/nope')
+const nf = await call('/aico-llm-wiki/nope')
 check('未知路径返回 404', nf.code === 404, 'code=' + nf.code)
 
 // ── 写路由：在**临时仓库**上测，不碰真实 wiki ──
@@ -284,16 +284,16 @@ function postCall(pathname, body) {
   })
 }
 
-const c1 = await postCall('/aico-local-wiki/api/commit', { id: 'writable' })
+const c1 = await postCall('/aico-llm-wiki/api/commit', { id: 'writable' })
 check('★ commit 有来源的暂存页成功', c1.code === 200 && JSON.parse(c1.body).ok === true,
   'code=' + c1.code + ' ' + String(c1.body).slice(0, 120))
 
-const c2 = await postCall('/aico-local-wiki/api/commit', { id: 'no-source' })
+const c2 = await postCall('/aico-llm-wiki/api/commit', { id: 'no-source' })
 const c2j = JSON.parse(c2.body)
 check('★ 无 sources 被闸门拒绝（两段式的第二道闸）', c2.code === 409 && c2j.ok === false,
   'code=' + c2.code + ' blockers=' + JSON.stringify(c2j.blockers))
 
-const c3 = await postCall('/aico-local-wiki/api/commit', { id: '根本不存在' })
+const c3 = await postCall('/aico-llm-wiki/api/commit', { id: '根本不存在' })
 check('commit 未知 id 返回 404', c3.code === 404, 'code=' + c3.code)
 
 // ── 分拣写路径（同样只在临时仓库上）──
@@ -309,16 +309,16 @@ check('commit 未知 id 返回 404', c3.code === 404, 'code=' + c3.code)
   await writeFile(join(T, '.rejected', 'c.md'), mkPage('tri-c', '被拒绝 C'), 'utf8')
   await writeFile(join(T, '.rejected', 'README.md'), '# 说明\n', 'utf8')
 
-  const list = JSON.parse((await call('/aico-local-wiki/api/triage')).body)
+  const list = JSON.parse((await call('/aico-llm-wiki/api/triage')).body)
   check('分拣列表按 rel 精确列出（含子目录里的条目）',
     list.items.length === 3 && list.items.some(x => x.rel === '.trash/staged-20260101-000000/a.md'),
     JSON.stringify(list.items.map(x => x.rel)))
 
-  const one = JSON.parse((await call('/aico-local-wiki/api/triage?rel=' + encodeURIComponent('.trash/b.md'))).body)
+  const one = JSON.parse((await call('/aico-llm-wiki/api/triage?rel=' + encodeURIComponent('.trash/b.md'))).body)
   check('按 rel 取全文', one.ok === true && /正文 tri-b/.test(one.body), String(one.body).slice(0, 60))
 
   // ★ confirm 守卫：这是**服务端**的闸，不是前端那个两段式
-  const noConfirm = await postCall('/aico-local-wiki/api/triage', { rel: '.trash/b.md', action: 'discard' })
+  const noConfirm = await postCall('/aico-llm-wiki/api/triage', { rel: '.trash/b.md', action: 'discard' })
   check('★ 不带 confirm 的永久删除被拒（不可逆操作的服务端闸）',
     noConfirm.code === 400 && /confirm/.test(String(noConfirm.body)),
     'code=' + noConfirm.code + ' ' + String(noConfirm.body).slice(0, 90))
@@ -326,36 +326,36 @@ check('commit 未知 id 返回 404', c3.code === 404, 'code=' + c3.code)
     existsSync(join(T, '.trash', 'b.md')))
 
   // 恢复 → 必须进 staged，绝不进 pages
-  const rest = await postCall('/aico-local-wiki/api/triage', { rel: '.trash/b.md', action: 'restore' })
+  const rest = await postCall('/aico-llm-wiki/api/triage', { rel: '.trash/b.md', action: 'restore' })
   check('恢复成功', rest.code === 200 && JSON.parse(rest.body).ok === true, String(rest.body).slice(0, 120))
   check('★ 恢复落到 staged/ 而不是 pages/（两段式的第一段不许被绕过）',
     existsSync(join(T, 'staged', 'b.md')) && !existsSync(join(T, 'pages', 'lesson', 'b.md')))
-  const after = JSON.parse((await call('/aico-local-wiki/api/triage')).body)
+  const after = JSON.parse((await call('/aico-llm-wiki/api/triage')).body)
   check('恢复后它从分拣列表里消失', !after.items.some(x => x.rel === '.trash/b.md'),
     JSON.stringify(after.items.map(x => x.rel)))
 
   // 真正的删除
-  const del = await postCall('/aico-local-wiki/api/triage', { rel: '.rejected/c.md', action: 'discard', confirm: true })
+  const del = await postCall('/aico-llm-wiki/api/triage', { rel: '.rejected/c.md', action: 'discard', confirm: true })
   check('带 confirm 的永久删除成功', del.code === 200 && JSON.parse(del.body).ok === true, String(del.body).slice(0, 120))
   check('文件确实没了', !existsSync(join(T, '.rejected', 'c.md')))
 
   // 路径穿越走写路径也不行
-  const trav = await postCall('/aico-local-wiki/api/triage', { rel: '../pages/lesson/x.md', action: 'discard', confirm: true })
+  const trav = await postCall('/aico-llm-wiki/api/triage', { rel: '../pages/lesson/x.md', action: 'discard', confirm: true })
   check('★ 写路径的路径穿越也被挡住', trav.code === 400, 'code=' + trav.code + ' ' + String(trav.body).slice(0, 90))
 
   // 非法 action
-  const badAct = await postCall('/aico-local-wiki/api/triage', { rel: '.trash/staged-20260101-000000/a.md', action: '删掉' })
+  const badAct = await postCall('/aico-llm-wiki/api/triage', { rel: '.trash/staged-20260101-000000/a.md', action: '删掉' })
   check('未知 action 返回 400', badAct.code === 400, 'code=' + badAct.code)
 }
 
-const c4 = await postCall('/aico-local-wiki/api/capabilities', { enabled: true, explicitOnly: ['workflow', 'ralph'] })
+const c4 = await postCall('/aico-llm-wiki/api/capabilities', { enabled: true, explicitOnly: ['workflow', 'ralph'] })
 check('★ 能力包配置写回成功', c4.code === 200 && JSON.parse(c4.body).ok === true, String(c4.body).slice(0, 140))
 const { readFile: rf } = await import('node:fs/promises')
 const saved = JSON.parse(await rf(join(T, 'wiki.config.json'), 'utf8'))
 check('★ 配置确实落进 wiki.config.json', JSON.stringify(saved.capabilities.explicitOnly) === '["workflow","ralph"]',
   JSON.stringify(saved.capabilities))
 
-const c5 = await postCall('/aico-local-wiki/api/capabilities', { bad: 1 })
+const c5 = await postCall('/aico-llm-wiki/api/capabilities', { bad: 1 })
 check('非法载荷返回 400', c5.code === 400, 'code=' + c5.code)
 
 // ── 模型：目录 / 写配置 / 触发提炼 ──
@@ -363,7 +363,7 @@ check('非法载荷返回 400', c5.code === 400, 'code=' + c5.code)
 // 这一段跑在临时 root（T）上（见上文 mod.apply 的那次重挂），所以写配置
 // **不会**碰到真实的 dsh-wiki/wiki.config.json。
 {
-  const m = await call('/aico-local-wiki/api/models')
+  const m = await call('/aico-llm-wiki/api/models')
   let mj = null
   try { mj = JSON.parse(m.body) } catch (e) { check('api/models 响应是合法 JSON', false, e.message) }
   check('api/models 返回 200 且是 JSON', m.code === 200 && !!mj, 'code=' + m.code)
@@ -382,7 +382,7 @@ check('非法载荷返回 400', c5.code === 400, 'code=' + c5.code)
   }
 
   // 写配置：故意塞进一个拼错的 mode 和一个字符串形式的候选
-  const w = await postCall('/aico-local-wiki/api/llm', {
+  const w = await postCall('/aico-llm-wiki/api/llm', {
     mode: 'ROTATE', models: ['m'], onError: 'sure-why-not',
     sites: { distill: { models: ['m/m'] } },
   })
@@ -406,7 +406,7 @@ check('非法载荷返回 400', c5.code === 400, 'code=' + c5.code)
     JSON.stringify(onDisk.capabilities && onDisk.capabilities.explicitOnly))
 
   // 未注册的 provider：写得进去，但**运行时必须报出来**
-  const w2 = await postCall('/aico-local-wiki/api/llm', { mode: 'rotate', models: ['nope/nope', 'm/m'] })
+  const w2 = await postCall('/aico-llm-wiki/api/llm', { mode: 'rotate', models: ['nope/nope', 'm/m'] })
   const w2j = JSON.parse(w2.body)
   const rejected = w2j.routes && w2j.routes.distill && w2j.routes.distill.rejected
   check('★ 未注册的 provider 被运行时标出来（否则用户以为轮换在用两个模型）',
@@ -416,7 +416,7 @@ check('非法载荷返回 400', c5.code === 400, 'code=' + c5.code)
     (w2j.routes.distill.candidates || []).length === 1, JSON.stringify(w2j.routes.distill.candidates))
 
   // 提炼：未知会话 id
-  const hMiss = await postCall('/aico-local-wiki/api/harvest', { session: 'no-such-session-xyz' })
+  const hMiss = await postCall('/aico-llm-wiki/api/harvest', { session: 'no-such-session-xyz' })
   let hmj = null
   try { hmj = JSON.parse(hMiss.body) } catch (e) { check('api/harvest 响应是合法 JSON', false, e.message) }
   check('★ 未知会话返回 404 + 可读原因（不是 HTML、不是 500）',
@@ -456,17 +456,17 @@ function postCallDesktop(pathname, body) {
 }
 
 // 同样的写路径，但走**桌面垫片**形态的 req
-const d1 = await postCallDesktop('/aico-local-wiki/api/capabilities', { enabled: true, explicitOnly: ['workflow'] })
+const d1 = await postCallDesktop('/aico-llm-wiki/api/capabilities', { enabled: true, explicitOnly: ['workflow'] })
 check('★ 桌面载体（app://）下 POST 也能被处理（body 走异步迭代，不是 data/end 事件）',
   d1.code === 200 && JSON.parse(d1.body).ok === true,
   'code=' + d1.code + ' ' + String(d1.body).slice(0, 140))
-const d2 = await postCallDesktop('/aico-local-wiki/api/commit', { id: 'no-source' })
+const d2 = await postCallDesktop('/aico-llm-wiki/api/commit', { id: 'no-source' })
 check('★ 桌面载体下 commit 的闸门照常生效',
   d2.code === 409 && JSON.parse(d2.body).ok === false,
   'code=' + d2.code + ' ' + String(d2.body).slice(0, 140))
 
 // ── 读路由：单页正文（"行是活的"靠它） ──
-const pg = await call('/aico-local-wiki/api/page?id=writable')
+const pg = await call('/aico-llm-wiki/api/page?id=writable')
 const pgj = JSON.parse(pg.body)
 check('★ 单页接口把正文带回来', pg.code === 200 && pgj.ok === true && pgj.body.includes('内容'),
   'code=' + pg.code + ' body=' + JSON.stringify(pgj.body || '').slice(0, 80))
@@ -474,10 +474,10 @@ check('单页接口带 sources 与 usage',
   Array.isArray(pgj.sources) && pgj.sources.length === 1 && typeof pgj.usage?.hits === 'number',
   'sources=' + JSON.stringify(pgj.sources) + ' usage=' + JSON.stringify(pgj.usage))
 
-const pgNoId = await call('/aico-local-wiki/api/page')
+const pgNoId = await call('/aico-llm-wiki/api/page')
 check('单页接口缺 id 返回 400', pgNoId.code === 400, 'code=' + pgNoId.code)
 
-const pgMissing = await call('/aico-local-wiki/api/page?id=根本没有这页')
+const pgMissing = await call('/aico-llm-wiki/api/page?id=根本没有这页')
 check('单页接口未知 id 返回 404', pgMissing.code === 404, 'code=' + pgMissing.code)
 
 await rm(T, { recursive: true, force: true })

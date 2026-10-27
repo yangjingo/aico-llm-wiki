@@ -163,7 +163,7 @@ const mockCtx = {
 }
 
 const mod = await import('../index.js')
-check('导出 name / inject / apply', mod.name === 'aico-local-wiki' && Array.isArray(mod.inject) && typeof mod.apply === 'function')
+check('导出 name / inject / apply', mod.name === 'aico-llm-wiki' && Array.isArray(mod.inject) && typeof mod.apply === 'function')
 check('声明了 tools/llm/web/webServer 依赖',
   ['tools', 'llm', 'web', 'webServer'].every(s => mod.inject.includes(s)), JSON.stringify(mod.inject))
 
@@ -191,7 +191,7 @@ check('订阅 agent/created（能力包装配）', Array.isArray(handlers['agent
 const matchesPrefix = (prefix, pathname) => pathname === prefix || pathname.startsWith(prefix + '/')
 const uiRoute = registeredRoutes.find(r => r.kind === 'prefix')
 check('★ 注册了 UI 数据路由（prefix，覆盖全部四条 api 路径）',
-  !!uiRoute && ['/aico-local-wiki/api/state', '/aico-local-wiki/api/page', '/aico-local-wiki/api/commit', '/aico-local-wiki/api/capabilities']
+  !!uiRoute && ['/aico-llm-wiki/api/state', '/aico-llm-wiki/api/page', '/aico-llm-wiki/api/commit', '/aico-llm-wiki/api/capabilities']
     .every(p => matchesPrefix(uiRoute.path, p)),
   JSON.stringify(registeredRoutes.map(r => r.kind + ':' + r.path)))
 
@@ -270,7 +270,7 @@ try {
 }
 
 // ── 系统提示词段 ──
-check('贡献了 systemPrompt 段', sections.length === 1 && sections[0].name === 'app:aico-local-wiki', sections.map(s => s.name).join(','))
+check('贡献了 systemPrompt 段', sections.length === 1 && sections[0].name === 'app:aico-llm-wiki', sections.map(s => s.name).join(','))
 if (sections[0]) check('提示词段文本非空', typeof sections[0].text === 'function' && sections[0].text().length > 50)
 
 // ── pre-step：命中应注入 ──

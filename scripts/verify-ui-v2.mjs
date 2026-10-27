@@ -87,7 +87,7 @@ const J = async (r) => { try { return JSON.parse(r.body) } catch { return null }
 
 console.log('── /api/tree ──')
 {
-  const r = await J(await call('/aico-local-wiki/api/tree'))
+  const r = await J(await call('/aico-llm-wiki/api/tree'))
   check('返回 200 且 ok', r && r.ok === true)
   const leaf = r?.tree?.pages?.fact?.['env-vm.md']
   check('目录树含 pages/fact/env-vm.md 叶子（带 id/title）',
@@ -100,7 +100,7 @@ console.log('── /api/tree ──')
 
 console.log('── /api/state 溯源 ──')
 {
-  const r = await J(await call('/aico-local-wiki/api/state'))
+  const r = await J(await call('/aico-llm-wiki/api/state'))
   const c = r?.knowledge?.committed?.find(p => p.id === 'env-vm')
   check('committed 带 srcs 数组（3 条来源）',
     c && Array.isArray(c.srcs) && c.srcs.length === 3, JSON.stringify(c && c.srcs))
@@ -112,21 +112,21 @@ console.log('── /api/state 溯源 ──')
 
 console.log('── /vendor 静态路由 ──')
 {
-  const r = await call('/aico-local-wiki/vendor/d3.min.js')
+  const r = await call('/aico-llm-wiki/vendor/d3.min.js')
   // jsdelivr 的 d3 dist 头部是版权注释（// https://d3js.org v7.x…），
   // 判特征而不是判首字符：forceSimulation/d3.zoom 是图谱交互真正依赖的 API。
   check('d3.min.js 200 且含 forceSimulation/zoom（图谱依赖）',
     r.code === 200 && String(r.body).includes('forceSimulation') && String(r.body).includes('zoom'),
     'code=' + r.code + ' len=' + String(r.body).length)
-  const bad = await call('/aico-local-wiki/vendor/../../package.json')
+  const bad = await call('/aico-llm-wiki/vendor/../../package.json')
   check('★ 越界守卫：../package.json 拒绝（404）', bad.code === 404, 'code=' + bad.code)
-  const nf = await call('/aico-local-wiki/vendor/nope.exe')
+  const nf = await call('/aico-llm-wiki/vendor/nope.exe')
   check('MIME 白名单外后缀拒绝', nf.code === 404)
 }
 
 console.log('── /api/graph（handler 级）──')
 {
-  const r = await J(await call('/aico-local-wiki/api/graph'))
+  const r = await J(await call('/aico-llm-wiki/api/graph'))
   check('200 且节点带服务端布局坐标', r && r.ok === true && r.nodes?.every?.(n => Number.isFinite(n.x) && Number.isFinite(n.y)))
   check('stats 口径', r && r.stats?.nodes === 2)
 }
@@ -144,7 +144,7 @@ if (!hasReact()) {
   check('sourceKind：URL → 链接 + href', sourceKind('https://a.b/c/d.md').kind === 'url' && !!sourceKind('https://a.b/c/d.md').href)
   check('sourceKind：路径 → 文档', sourceKind('D:/x/规格.md').kind === 'doc')
 
-  const state = await call('/aico-local-wiki/api/state').then(r => JSON.parse(r.body))
+  const state = await call('/aico-llm-wiki/api/state').then(r => JSON.parse(r.body))
   const html = H.renderToStaticMarkup(H.h(KnowledgeTab, { state }))
   check('知识表渲染「来源」列且 chips 带类型（会话/链接）',
     html.includes('来源') && html.includes('会话') && html.includes('链接'))

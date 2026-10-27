@@ -1,5 +1,5 @@
 /**
- * aico-local-wiki —— 浏览器半。
+ * aico-llm-wiki —— 浏览器半。
  *
  * 零构建：手写 CJS，由 window.__ModuleLoader__ 装载；react 与 DSH 原语经
  * factory 的 require 注入。契约来自 DSH 自己的客户端插件
@@ -18,7 +18,7 @@
  */
 
 window.__ModuleLoader__.load({
-  id: 'aico-local-wiki',
+  id: 'aico-llm-wiki',
   factory: (require) => {
     var module = { exports: {} }
     var exports = module.exports
@@ -41,19 +41,19 @@ window.__ModuleLoader__.load({
     try {
       P = require('@deepseek-ai/dsh-client-ui-primitives') || {}
     } catch (e) {
-      if (typeof console !== 'undefined') console.error('[aico-local-wiki] DSH 原语不可用，退化为原生元素：', e)
+      if (typeof console !== 'undefined') console.error('[aico-llm-wiki] DSH 原语不可用，退化为原生元素：', e)
     }
 
-    var API = '/aico-local-wiki/api/state'
-    var PAGE_API = '/aico-local-wiki/api/page'
-    var TRIAGE_API = '/aico-local-wiki/api/triage'
+    var API = '/aico-llm-wiki/api/state'
+    var PAGE_API = '/aico-llm-wiki/api/page'
+    var TRIAGE_API = '/aico-llm-wiki/api/triage'
     // 模型目录单独一条端点：列 provider/模型可能打网络，不能并进每 8 秒轮询的
     // /api/state。只在打开「模型」页签时取一次。
-    var MODELS_API = '/aico-local-wiki/api/models'
-    var LLM_API = '/aico-local-wiki/api/llm'
-    var HARVEST_API = '/aico-local-wiki/api/harvest'
+    var MODELS_API = '/aico-llm-wiki/api/models'
+    var LLM_API = '/aico-llm-wiki/api/llm'
+    var HARVEST_API = '/aico-llm-wiki/api/harvest'
     // 图谱也是独立端点：建图要遍历全库，不进 8 秒轮询（与服务端同一取舍）。
-    var GRAPH_API = '/aico-local-wiki/api/graph'
+    var GRAPH_API = '/aico-llm-wiki/api/graph'
 
     /** DSH 图标；没有原语时返回 null（不画假的代替品）。 */
     function Ico(name, size) {
@@ -679,7 +679,7 @@ window.__ModuleLoader__.load({
     function ensureStyle() {
       if (styled || typeof document === 'undefined') return
       var el = document.createElement('style')
-      el.setAttribute('data-aico-local-wiki', '1')
+      el.setAttribute('data-aico-llm-wiki', '1')
       el.textContent = CSS
       document.head.appendChild(el)
       styled = true
@@ -799,7 +799,7 @@ window.__ModuleLoader__.load({
       } catch (e) { /* 无 body 时（离线断言）静默 */ }
     }
 
-    var OPEN_DOC_API = '/aico-local-wiki/api/open-doc'
+    var OPEN_DOC_API = '/aico-llm-wiki/api/open-doc'
     /** 点证据开文档：POST /api/open-doc，服务端用默认程序打开；
      *  PDF 带页码时走浏览器 #page=N 直接跳页。结果用 toast 反馈。 */
     function openDoc(sk) {
@@ -1049,7 +1049,7 @@ window.__ModuleLoader__.load({
         if (keep && i >= 0) cur.splice(i, 1)
         setBusy(name)
         setOptKey(name, !keep)
-        post('/aico-local-wiki/api/capabilities', { enabled: true, explicitOnly: cur })
+        post('/aico-llm-wiki/api/capabilities', { enabled: true, explicitOnly: cur })
           .then(function (r) {
             setBusy(null)
             if (r.j && r.j.ok) { setMsg({ ok: true, text: '已写入 wiki.config.json — 下一次会话装配时生效' }); props.onChanged && props.onChanged() }
@@ -1477,7 +1477,7 @@ window.__ModuleLoader__.load({
       var commit = function (id) {
         setBusy(id)
         setPend(function (l) { return l.indexOf(id) >= 0 ? l : l.concat([id]) })
-        post('/aico-local-wiki/api/commit', { id: id })
+        post('/aico-llm-wiki/api/commit', { id: id })
           .then(function (r) {
             setBusy(null)
             if (r.j && r.j.ok) { setMsg({ ok: true, text: '已固化 ' + id }); props.onChanged && props.onChanged() }
@@ -1532,7 +1532,7 @@ window.__ModuleLoader__.load({
       var treeState = useState(null)
       var tree = treeState[0], setTree = treeState[1]
       var loadTree = useCallback(function () {
-        getJson('/aico-local-wiki/api/tree')
+        getJson('/aico-llm-wiki/api/tree')
           .then(function (r) {
             if (r.j && r.j.ok) setTree(r.j.tree || {})
           })
@@ -2232,7 +2232,7 @@ window.__ModuleLoader__.load({
 
     // ── 三方包加载：client/vendor 的 UMD 经宿主静态路由注入 ────────────────
     //
-    // 零构建约束不变：不引打包器，vendor UMD 由 /aico-local-wiki/vendor/* 提供，
+    // 零构建约束不变：不引打包器，vendor UMD 由 /aico-llm-wiki/vendor/* 提供，
     // 运行时按需 <script> 注入一次。失败返回 null，调用方回落静态渲染。
     function loadVendorScript(src) {
       return new Promise(function (done) {
@@ -2437,7 +2437,7 @@ window.__ModuleLoader__.load({
       var d3 = d3State[0], setD3 = d3State[1]
       useEffect(function () {
         if (controlled) return
-        loadVendorScript('/aico-local-wiki/vendor/d3.min.js?v=7')
+        loadVendorScript('/aico-llm-wiki/vendor/d3.min.js?v=7')
           .then(function (lib) { if (lib) setD3(lib) })
       }, [controlled])
       // 目录树跳转载荷：外部指定要选中的节点 id（图谱定位）。
@@ -2487,7 +2487,7 @@ window.__ModuleLoader__.load({
 
       var commit = function (id) {
         setBusy(true)
-        post('/aico-local-wiki/api/commit', { id: id })
+        post('/aico-llm-wiki/api/commit', { id: id })
           .then(function (r) {
             setBusy(false)
             if (r.j && r.j.ok) {
@@ -2726,7 +2726,7 @@ window.__ModuleLoader__.load({
       try { localStorage.setItem(THEME_KEY, t) } catch (e) { /* 记不住不挡切换 */ }
     }
 
-    var ROOT_API = '/aico-local-wiki/api/switch-root'
+    var ROOT_API = '/aico-llm-wiki/api/switch-root'
     /** 知识库切换：显示当前路径，「点击」展开输入框；提交后 POST 切换并刷新。
      *  服务端校验目录、给新库铺骨架、并把选择持久化（重启不丢）。 */
     function RootSwitch(props) {
@@ -3011,7 +3011,7 @@ window.__ModuleLoader__.load({
             ) : null,
             h('div', { className: 'lw-body lw-scroll' },
               err
-                ? h('div', { className: 'lw-msg err' }, '读不到状态：' + err + '　（/aico-local-wiki/api/state）')
+                ? h('div', { className: 'lw-msg err' }, '读不到状态：' + err + '　（/aico-llm-wiki/api/state）')
                 : !state
                   ? h('div', { className: 'lw-empty' }, '读取中…')
                   : tab === 'capabilities'
@@ -3195,7 +3195,7 @@ window.__ModuleLoader__.load({
         })
       }
 
-      if (err) return h('div', { className: 'lw-msg err' }, '读不到分拣列表：' + err + '　（/aico-local-wiki/api/triage）')
+      if (err) return h('div', { className: 'lw-msg err' }, '读不到分拣列表：' + err + '　（/aico-llm-wiki/api/triage）')
       if (!items) return h('div', { className: 'lw-empty' }, '读取中…')
 
       var inTrash = items.filter(function (x) { return x.from === '.trash' }).length
@@ -3296,7 +3296,7 @@ window.__ModuleLoader__.load({
     // 所以开关**不能**是某个组件的 useState —— 那样另一处够不着。
     // 用一个极小的订阅式 store：谁都能 set，谁订阅谁重渲染。
 
-    var PENDING_API = '/aico-local-wiki/api/pending'
+    var PENDING_API = '/aico-llm-wiki/api/pending'
 
     function makeStore(initial) {
       var v = initial
@@ -3428,7 +3428,7 @@ window.__ModuleLoader__.load({
       )
     }
 
-    var PEND_PAGE_API = '/aico-local-wiki/api/page'
+    var PEND_PAGE_API = '/aico-llm-wiki/api/page'
     /** 待固化清单里的一页：标题 + 可展开的正文预览。
      *  固化是把蒸馏产物升入 L1 的闸门，闸门要人**看得见内容**才守得住——
      *  所以确认态必须能逐页翻，而不是只给一个总数。 */
@@ -3562,7 +3562,7 @@ window.__ModuleLoader__.load({
             loadPending()
             return
           }
-          post('/aico-local-wiki/api/commit', { id: ids[i] }).then(function (r) {
+          post('/aico-llm-wiki/api/commit', { id: ids[i] }).then(function (r) {
             if (r.j && r.j.ok) okN++ ; else failN.push(ids[i])
             step(i + 1)
           })
@@ -3931,7 +3931,7 @@ window.__ModuleLoader__.load({
     /** 本插件自己的 bundle？plugins.* 插槽的 subject 判据。 */
     function isOwnBundle(subject) {
       return subject && subject.kind === 'bundle'
-        && subject.pkg && subject.pkg.name === 'aico-local-wiki'
+        && subject.pkg && subject.pkg.name === 'aico-llm-wiki'
     }
 
     /** hook：订阅面板 active 状态（注入面给 isActive/subscribeActive，同 aida-lld）。 */
@@ -3986,7 +3986,7 @@ window.__ModuleLoader__.load({
     }
 
     // ── 插件契约 ──
-    var name = 'aico-local-wiki'
+    var name = 'aico-llm-wiki'
     var inject = ['slots', 'locale', 'theme', 'layout']
 
     var ZH = { title: 'aico-wiki', capabilities: '能力', knowledge: '知识', supply: '补料' }
@@ -3994,7 +3994,7 @@ window.__ModuleLoader__.load({
 
     function apply(ctx) {
       try {
-        ctx.effect(function () { return ctx.locale.register(name, { zh: ZH, en: EN }) }, 'aico-local-wiki: dictionaries')
+        ctx.effect(function () { return ctx.locale.register(name, { zh: ZH, en: EN }) }, 'aico-llm-wiki: dictionaries')
       } catch (e) { /* 字典注册失败不该挡住 UI */ }
       // ── 对话内的 wiki_recall 卡片 ──
       //
@@ -4009,7 +4009,7 @@ window.__ModuleLoader__.load({
           }, RecallCard)
         })
       } catch (e) {
-        try { console.error('[aico-local-wiki] wiki_recall 卡片座位不可用：', e) } catch (err) {}
+        try { console.error('[aico-llm-wiki] wiki_recall 卡片座位不可用：', e) } catch (err) {}
       }
       // 侧边栏入口（sidebar.footer.action）已按需求移除：
       // 打开工作台的入口收敛为 /aico-wiki 命令 + 插件页卡片。
@@ -4023,7 +4023,7 @@ window.__ModuleLoader__.load({
         ctx.slots.inject('conversation.input.dock', function () {
           return ctx.slots.register({
             name: 'conversation.input.dock',
-            id: 'aico-local-wiki-pending',
+            id: 'aico-llm-wiki-pending',
             order: 40,
             locale: name,
             // 座位契约：inject 收到当前 sessionId，欢迎页（hero）没有会话时是
@@ -4035,7 +4035,7 @@ window.__ModuleLoader__.load({
       } catch (e) {
         // 座位拿不到就不显示提示条，但**面板照旧可用**（侧边栏入口还在）。
         // 一个附加的提示不该有能力拖垮整个插件。
-        try { console.error('[aico-local-wiki] 待办提示条座位不可用：', e) } catch (err) {}
+        try { console.error('[aico-llm-wiki] 待办提示条座位不可用：', e) } catch (err) {}
       }
 
       // ── 主面板接管（keyed main，对齐 aida-lld 的 0.2.0 形式）──
@@ -4091,7 +4091,7 @@ window.__ModuleLoader__.load({
           },
         }, AicoWikiCenter)
       } catch (e) {
-        try { console.error('[aico-local-wiki] main 面板注册失败：', e) } catch (err) {}
+        try { console.error('[aico-llm-wiki] main 面板注册失败：', e) } catch (err) {}
       }
 
       // 插件页入口 1：官方组之后的独立卡片（点卡片进入本插件的二级页面）。
@@ -4106,7 +4106,7 @@ window.__ModuleLoader__.load({
           }, AicoPluginItem)
         })
       } catch (e) {
-        try { console.error('[aico-local-wiki] plugins.item 座位不可用：', e) } catch (err) {}
+        try { console.error('[aico-llm-wiki] plugins.item 座位不可用：', e) } catch (err) {}
       }
 
       // 插件页入口 2：本插件详情页正文区块（大号打开按钮）。
@@ -4121,7 +4121,7 @@ window.__ModuleLoader__.load({
           }, AicoPluginSection)
         })
       } catch (e) {
-        try { console.error('[aico-local-wiki] plugins.detail.section 座位不可用：', e) } catch (err) {}
+        try { console.error('[aico-llm-wiki] plugins.detail.section 座位不可用：', e) } catch (err) {}
       }
 
       // 入口 3：composer 命令 aico-wiki（popupSelect 选页签直达，全程不经模型）。
@@ -4146,10 +4146,10 @@ window.__ModuleLoader__.load({
                 onSelect: async function (option) { openEntry(option && option.id) },
               },
             })
-          }, 'aico-local-wiki: aico-wiki command')
+          }, 'aico-llm-wiki: aico-wiki command')
         })
       } catch (e) {
-        try { console.error('[aico-local-wiki] 命令注册不可用：', e) } catch (err) {}
+        try { console.error('[aico-llm-wiki] 命令注册不可用：', e) } catch (err) {}
       }
     }
 

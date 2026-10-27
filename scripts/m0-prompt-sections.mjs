@@ -10,7 +10,7 @@ const NM = process.env.USERPROFILE + '\\.dsh\\profiles\\web\\node_modules'
 const targets = [
   ['gitcompass', ['lib/index.js', 'index.js', 'lib/main.js']],
   ['dsh-web-search-pro', ['lib/index.js']],
-  ['aico-local-wiki', ['index.js']],
+  ['aico-llm-wiki', ['index.js']],
   ['memoripo', ['lib/index.js']],
   ['@liustack/modlens', ['lib/index.js', 'index.js']],
   ['dsh-mcp-lens', ['lib/index.js', 'index.js']],

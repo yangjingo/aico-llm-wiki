@@ -17,7 +17,7 @@
 ```powershell
 dsh plugin add github:yangjingo/aico-llm-wiki
 # 本地开发
-dsh plugin add link:D:/myCode/agent/aiCo/aico-local-wiki
+dsh plugin add link:D:/myCode/agent/aiCo/aico-llm-wiki
 ```
 
 零构建、纯 JS；宿主依赖只声明为 `peerDependencies`，不要装第二份。

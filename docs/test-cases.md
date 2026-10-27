@@ -30,7 +30,7 @@
 
 ## TC-04 Host API
 
-- `GET /aico-local-wiki/api/graph` 返回 200，`ok: true`。
+- `GET /aico-llm-wiki/api/graph` 返回 200，`ok: true`。
 - 响应含 `nodes`（带 x/y 坐标）、`edges`、`stats`、`width/height`。
 - `?maxEdges=N` 截断生效。
 - 建图不进 8 秒轮询（打开页签才请求）。

@@ -15,7 +15,7 @@ Input: 用户指示「基于 spec 的 design 配色，重置绘制插件的二�
 >
 > **修订 2（2026-10-25，用户反馈）**：① 首页图谱升级为 **Neo4j Browser 风格交互图**
 > ——三方包 d3 v7（UMMD 280KB vendor 进 client/vendor/，经宿主静态路由
-> /aico-local-wiki/vendor/* 注入，零构建约束不变）：forceSimulation + 缩放平移 +
+> /aico-llm-wiki/vendor/* 注入，零构建约束不变）：forceSimulation + 缩放平移 +
 > 节点拖拽 + 悬停/选中邻居高亮（灰化其它）；d3 拥有 svg 子树，选中态回写 React
 > state 复用抽屉/固化/跳转；加载失败或离线渲染自动回落静态 SVG。
 > ② **知识库目录树**：/api/tree 返回 pages/·staged/ 目录结构，知识页签左侧

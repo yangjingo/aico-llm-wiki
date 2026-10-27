@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-const req = createRequire('file:///D:/Harness/aico-local-wiki/index.js')
+const req = createRequire('file:///D:/Harness/aico-llm-wiki/index.js')
 const Y = req('D:/Harness/dsh-desktop/resources/app/node_modules/js-yaml')
 const txt = await readFile(join(homedir(), '.dsh', 'settings.yaml'), 'utf8')
 const doc = (Y.load ?? Y.parse)(txt)

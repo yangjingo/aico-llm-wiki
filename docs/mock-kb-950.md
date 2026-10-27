@@ -61,13 +61,13 @@ updated: 2026-10-26
 
 ```yaml
 # C:\Users\<user>\.dsh\profiles\desktop\cordis.patch.yml
-- id: aico-local-wiki
-  name: aico-local-wiki
+- id: aico-llm-wiki
+  name: aico-llm-wiki
   config:
-    wikiRoot: D:\myCode\agent\aiCo\aico-local-wiki
+    wikiRoot: D:\myCode\agent\aiCo\aico-llm-wiki
 ```
 
-改完**重启 DSH** 生效（装配时读取）。用 `/aico-local-wiki/api/state` 的
+改完**重启 DSH** 生效（装配时读取）。用 `/aico-llm-wiki/api/state` 的
 `app.wikiRoot` 可验证当前进程用的是哪个根。
 
 > 踩坑记录：桌面 GUI 加载的是 `profiles\desktop`，不是 `profiles\web`——
@@ -92,5 +92,5 @@ updated: 2026-10-26
 验证一条新页面是否被读到，最快的方式：
 
 ```powershell
-node --input-type=module -e "import {loadPages} from 'file:///D:/myCode/agent/aiCo/aico-local-wiki/lib/wiki.js'; const r=await loadPages('D:/myCode/agent/aiCo/aico-local-wiki'); console.log(r.pages.map(p=>p.status+' '+p.id).join('\n'))"
+node --input-type=module -e "import {loadPages} from 'file:///D:/myCode/agent/aiCo/aico-llm-wiki/lib/wiki.js'; const r=await loadPages('D:/myCode/agent/aiCo/aico-llm-wiki'); console.log(r.pages.map(p=>p.status+' '+p.id).join('\n'))"
 ```

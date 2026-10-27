@@ -51,7 +51,7 @@ console.log('  React ' + H.version + '（取自 DSH 自己的 node_modules）')
 const M = H.build(true)
 check('从模块加载器捕获到 factory', typeof H.factory === 'function')
 check('导出 name/inject/apply（DSH 的客户端插件契约）',
-  M.name === 'aico-local-wiki' && Array.isArray(M.inject) && typeof M.apply === 'function',
+  M.name === 'aico-llm-wiki' && Array.isArray(M.inject) && typeof M.apply === 'function',
   M.name + ' inject=' + JSON.stringify(M.inject))
 check('导出测试接缝 __components / __logic',
   !!M.__components && !!M.__logic && typeof M.__css === 'string' && M.__css.length > 1000,

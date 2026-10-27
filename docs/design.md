@@ -1,7 +1,7 @@
 # Design
 
 > fork 自 [Dayi-Z/dsh-learn-wiki](https://github.com/Dayi-Z/dsh-learn-wiki) v0.3.1（`1d20bd5`），
-> 收编为 aiCo 的本地 wiki 插件，更名 `aico-local-wiki`。本文档记录 aiCo 增量改动的设计；
+> 收编为 aiCo 的本地 wiki 插件，更名 `aico-llm-wiki`。本文档记录 aiCo 增量改动的设计；
 > 上游架构（CRAG 纠错回路、两段式 commit、挣扎触发补料）见仓库 README。
 
 ## Goals（aiCo 增量）
@@ -16,7 +16,7 @@
 pages/ + usage.json (usage.co)
     │ lib/graph.js buildGraph（纯函数：tag 边 + co 边，稳定排序，maxEdges 截断）
     ▼
-GET /aico-local-wiki/api/graph
+GET /aico-llm-wiki/api/graph
     │ graphLayout（服务端确定性力导向：圆形初始化 + 固定 200 迭代，无随机数）
     ▼
 节点带 (x,y) 坐标下发
@@ -35,7 +35,7 @@ GET /aico-local-wiki/api/graph
 | 图谱独立端点，不进 8 秒轮询 | 建图遍历全库，打开页签才取（与 /api/models 同一取舍） |
 | 莫兰迪配色 + 酒红画布 `#8e5a5f` | 用户指定风格；刻意不走 --dsw-* token，红底对比度优先 |
 | 隔离页深灰紫 `#4d4348` | 警示红在红底上隐身；隔离语义由抽屉文字承载 |
-| 路由前缀 `/aico-local-wiki/api/*` | 收编更名（v0.4.0），不与上游 `/learn-wiki` 混用 |
+| 路由前缀 `/aico-llm-wiki/api/*` | 收编更名（v0.4.0），不与上游 `/learn-wiki` 混用 |
 
 ## Verification hooks
 

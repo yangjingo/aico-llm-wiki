@@ -1,8 +1,8 @@
-# Spec 03 · 收编 aiCo 并更名 aico-local-wiki
+# Spec 03 · 收编 aiCo 并更名 aico-llm-wiki
 
 Date: 2026-10-22
 Status: **Accepted / Implemented**（`a2910c6`，v0.4.0）
-Input: 用户指示「这个插件是 aico 的一个 aico-local-wiki 的插件」，
+Input: 用户指示「这个插件是 aico 的一个 aico-llm-wiki 的插件」，
 并要求结构/文档规范对齐 `@aida/dsh-lld-show-plugin`。
 
 ## 决定
@@ -14,11 +14,11 @@ Input: 用户指示「这个插件是 aico 的一个 aico-local-wiki 的插件�
 
 | 项 | 旧 | 新 |
 |----|-----|-----|
-| 包名 / 插件 id / 模块 id | dsh-learn-wiki | aico-local-wiki |
-| 源码目录 | — | `D:\myCode\agent\aiCo\aico-local-wiki`（git 保留上游历史） |
-| HTTP 路由前缀 | `/learn-wiki/api/*` | `/aico-local-wiki/api/*` |
+| 包名 / 插件 id / 模块 id | dsh-learn-wiki | aico-llm-wiki |
+| 源码目录 | — | `D:\myCode\agent\aiCo\aico-llm-wiki`（git 保留上游历史） |
+| HTTP 路由前缀 | `/learn-wiki/api/*` | `/aico-llm-wiki/api/*` |
 | UI 显示名 | learn-wiki | aico-wiki |
-| 日志文件 | `.learn-wiki.log` | `.aico-local-wiki.log` |
+| 日志文件 | `.learn-wiki.log` | `.aico-llm-wiki.log` |
 | 版本 | 0.3.1 | 0.4.0 |
 
 **不变**：工具名（wiki_recall / wiki_learn / wiki_commit 等）、wiki 目录结构
@@ -26,7 +26,7 @@ Input: 用户指示「这个插件是 aico 的一个 aico-local-wiki 的插件�
 
 ## 安装模式（对齐 aida-lld）
 
-- `dsh plugin --profile desktop add link:D:\myCode\agent\aiCo\aico-local-wiki`
+- `dsh plugin --profile desktop add link:D:\myCode\agent\aiCo\aico-llm-wiki`
   （受管理 bundle 依赖，加载条目由插件自带 cordis.patch.yml 提供）。
 - profile 的 cordis.patch.yml 只做 config 覆盖（wikiRoot），不手动 insert。
 - ⚠️ 桌面宿主用 **desktop** profile——详见 docs/integration-report.md 第 3 节事故记录。
