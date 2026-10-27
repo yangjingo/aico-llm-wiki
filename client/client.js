@@ -120,6 +120,23 @@ window.__ModuleLoader__.load({
       // 数字/英文/mono 小标签 JetBrains Mono（中文绝不能只挂 mono——无中文字形）。
       'font:var(--dsw-font-xs-13,13px/20px \'Noto Sans SC\',sans-serif);',
       'color:var(--lw-fg);caret-color:var(--lw-brand)}',
+      // ── 主题组（spec：界面可换肤）──
+      // 变量组挂在 .lw-shell[data-theme] 上：比 .lw-root 更内层，级联覆盖
+      // 默认组即可，选择器写一处、三种皮肤共用全部布局规则。
+      // 三色纪律不变：brand 仍只给重点与警示，只是每个主题换一套色相。
+      '.lw-shell[data-theme="morandi"]{',
+      '--lw-fg:#3b3e40;--lw-fg2:#666c6a;--lw-fg3:#78807c;--lw-fg4:#9aa29c;',
+      '--lw-line:#ccd2cc;--lw-line-soft:#e3e6e1;--lw-surface:#f5f6f2;--lw-raise:#edeee8;',
+      '--lw-hover:#e4e7df;--lw-active:#d9ded5;',
+      '--lw-brand:#7d8c6f;--lw-ok:#5f7a5a;--lw-bad:#a5614f;--lw-warn:#b08a5e;--lw-info:#5b7a99}',
+      '.lw-shell[data-theme="dark"]{',
+      '--lw-fg:#e7e8ec;--lw-fg2:#b9bcc4;--lw-fg3:#98a0ab;--lw-fg4:#6d747f;',
+      '--lw-line:#3a4048;--lw-line-soft:#2d3239;--lw-surface:#1e2126;--lw-raise:#24282f;',
+      '--lw-hover:#2c313a;--lw-active:#343a44;',
+      '--lw-brand:#e07a80;--lw-ok:#7fae8a;--lw-bad:#e07a80;--lw-warn:#d9a05e;--lw-info:#6aa6e0}',
+      // 这两处原来写死了浅色底（#fdf0f1），换肤会漏——放到原规则处改（见下）。
+      '.lw-shell[data-theme="dark"] ::selection{background:rgba(224,122,128,.35)}',
+      '.lw-shell[data-theme="morandi"] ::selection{background:rgba(125,140,111,.28)}',
       '.lw-root ::selection{background:rgba(181,51,59,.25)}',
       '.lw-root :focus-visible{outline:2px solid var(--lw-brand);outline-offset:1px;border-radius:6px}',
       '.lw-scroll{scrollbar-width:thin;scrollbar-color:rgba(86,100,114,.35) transparent}',
@@ -145,13 +162,30 @@ window.__ModuleLoader__.load({
       '.lw-head{display:flex;align-items:center;gap:9px;padding:0 0 12px}',
       '.lw-headicon{display:flex;align-items:center;color:var(--lw-brand)}',
       '.lw-title{font:var(--dsw-font-s-strong-14,600 14px/22px \'Noto Sans SC\',sans-serif)}',
-      '.lw-path{margin-left:auto;font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg4);font-variant-numeric:tabular-nums;',
-      'max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:rtl;text-align:left}',
       '.lw-tabs{display:flex;align-items:center;gap:6px;padding:0 0 10px;border-bottom:1px solid var(--lw-line-soft);flex-wrap:wrap}',
       '.lw-tabsum{margin-left:auto;font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg3);font-variant-numeric:tabular-nums}',
       // ── 二级界面骨架（spec 05 重绘）：左目录 + 右内容 ──
       '.lw-work{display:flex;flex:1;min-height:0}',
-      '.lw-nav{width:212px;flex:none;border-right:1px solid var(--lw-line-soft);padding:6px 0 12px;overflow:auto}',
+      '.lw-nav{width:212px;flex:none;border-right:1px solid var(--lw-line-soft);padding:6px 0 12px;overflow:auto;display:flex;flex-direction:column}',
+      // 侧边栏底部的知识库路径：margin-top:auto 把它钉到最下（导航短时），
+      // 导航长时随内容滚——反正它只是"我连的是哪个库"的备注。
+      // 侧边栏底部三件套：主题 / 换库 / 路径。margin-top:auto 把整块钉到最下
+      // （导航短时），导航长时随内容滚——它们都是"我在哪、连的哪个库"的备注。
+      '.lw-sidebottom{margin-top:auto;padding:14px 12px 0 15px;display:flex;flex-direction:column;gap:8px}',
+      '.lw-siderow{display:flex;align-items:center;gap:8px}',
+      '.lw-sidelabel{flex:none;font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg4);letter-spacing:.12em}',
+      '.lw-sidebottom .lw-sel{flex:1;min-width:0;max-width:none}',
+      '.lw-sidepath{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg4);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+      // 换库入口：折叠态是一行"库 + 路径"的按钮，点开展开成输入框。
+      '.lw-rootswitch{display:flex;align-items:center;gap:6px;width:100%;padding:4px 6px;border:1px solid var(--lw-line-soft);',
+      'border-radius:7px;background:transparent;cursor:pointer;font:inherit;text-align:left}',
+      '.lw-rootswitch:hover{border-color:var(--lw-line);background:var(--lw-hover)}',
+      '.lw-rootswitch-n{flex:none;font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg4);letter-spacing:.12em}',
+      '.lw-rootswitch-p{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;',
+      'font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg3);font-variant-numeric:tabular-nums}',
+      '.lw-rootswitch-edit{display:flex;flex-direction:column;gap:6px}',
+      '.lw-rootswitch-edit .lw-input{width:100%;min-width:0;font-size:11px}',
+      '.lw-rootswitch-acts{display:flex;gap:6px}',
       '.lw-nav-grp{font-family:\'JetBrains Mono\',\'Noto Sans SC\',ui-monospace,monospace;font-size:11px;',
       'letter-spacing:.18em;color:var(--lw-fg4);padding:14px 18px 6px}',
       '.lw-nav-item{display:flex;align-items:center;gap:10px;width:100%;padding:10px 16px 10px 15px;border:0;',
@@ -159,13 +193,13 @@ window.__ModuleLoader__.load({
       'color:var(--lw-fg2);text-align:left}',
       '.lw-nav-item:hover{background:var(--lw-hover)}',
       '.lw-nav-item:focus-visible{outline:2px solid var(--lw-brand);outline-offset:-2px}',
-      '.lw-nav-item.cur{color:var(--lw-fg);font-weight:600;border-left-color:var(--lw-brand);background:#fdf0f1}',
+      '.lw-nav-item.cur{color:var(--lw-fg);font-weight:600;border-left-color:var(--lw-brand);background:color-mix(in srgb,var(--lw-brand) 8%,transparent)}',
       '.lw-nav-n{font-family:\'JetBrains Mono\',\'Noto Sans SC\',ui-monospace,monospace;font-size:12px;color:var(--lw-fg4);width:20px;flex:none}',
       '.lw-nav-item.cur .lw-nav-n{color:var(--lw-brand)}',
       '.lw-nav-l{flex:1;min-width:0}',
       '.lw-nav-badge{font-family:\'JetBrains Mono\',\'Noto Sans SC\',ui-monospace,monospace;font-size:11px;',
-      'background:#fdf0f1;color:var(--lw-brand);border-radius:99px;padding:1px 8px;flex:none}',
-      '.lw-main{flex:1;min-width:0;display:flex;flex-direction:column;padding:2px 0 0 20px}',
+      'background:color-mix(in srgb,var(--lw-brand) 8%,transparent);color:var(--lw-brand);border-radius:99px;padding:1px 8px;flex:none}',
+      '.lw-main{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;padding:2px 0 0 20px}',
       '.lw-crumb{font-size:12px;color:var(--lw-fg4);margin-bottom:10px}',
       '.lw-crumb b{color:var(--lw-brand);font-weight:600}',
       '.lw-h3{margin:0 0 4px;font:600 24px/1.35 \'Noto Sans SC\',sans-serif;color:var(--lw-fg)}',
@@ -177,6 +211,10 @@ window.__ModuleLoader__.load({
       'font-weight:700;color:var(--lw-fg);line-height:1.1;display:flex;align-items:center;gap:7px}',
       '.lw-kpi-n.r{color:var(--lw-brand)}',
       '.lw-kpi-l{font-size:12px;color:var(--lw-fg2);margin-top:3px}',
+      // KPI 格是 button 时重置浏览器默认样式，并给"能按"的手感。
+      'button.lw-kpi{font:inherit;color:inherit;text-align:left;cursor:pointer;transition:border-color .15s,box-shadow .15s}',
+      'button.lw-kpi:hover{border-color:var(--lw-brand);box-shadow:0 1px 6px rgba(0,0,0,.08)}',
+      'button.lw-kpi:focus-visible{outline:2px solid var(--lw-brand);outline-offset:1px}',
       // ── 知识页签：目录树 + 表格两栏（spec 06 修订）──
       '.lw-kn{display:flex;gap:16px;min-height:0;align-items:flex-start}',
       '.lw-kn-main{flex:1;min-width:0}',
@@ -201,6 +239,8 @@ window.__ModuleLoader__.load({
       '@media (max-width:760px){.lw-work{flex-direction:column}',
       '.lw-nav{width:auto;display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--lw-line-soft)}',
       '.lw-nav-grpwrap{display:flex;align-items:center}.lw-nav-grp{display:none}',
+      // 窄屏下侧边栏变成横向条，底部三件套不再适合塞在里面。
+      '.lw-sidebottom{display:none}',
       '.lw-nav-item{width:auto;white-space:nowrap;border-left:0;border-bottom:3px solid transparent}',
       '.lw-nav-item.cur{border-bottom-color:var(--lw-brand)}}',
       '.lw-body{flex:1;min-height:0;overflow:auto;padding:12px 0 18px}',
@@ -279,7 +319,14 @@ window.__ModuleLoader__.load({
       '.lw-src-session{border-color:#b5333b;color:#b5333b}',
       '.lw-src-doc{border-color:#566472;color:#566472}',
       '.lw-src-url{border-color:#1565c0;color:#1565c0}',
-      'a.lw-srcchip:hover{background:#fdf0f1}',
+      'a.lw-srcchip:hover{background:color-mix(in srgb,var(--lw-brand) 8%,transparent)}',
+      // 文档类 chip 可点击（打开本地源文件），给一点"能按"的手感。
+      'a.lw-src-doc{cursor:pointer}',
+      // 打开动作的轻提示：不出对话框，右下角冒一条、3 秒自灭。
+      '.lw-toast{position:fixed;right:18px;bottom:18px;z-index:99999;max-width:420px;',
+      'padding:8px 14px;border-radius:8px;border:1px solid var(--lw-line);background:var(--lw-surface);',
+      'color:var(--lw-fg);font:var(--dsw-font-xs-12,12px/18px \'Noto Sans SC\',sans-serif);box-shadow:0 4px 16px rgba(0,0,0,.18)}',
+      '.lw-toast-bad{color:var(--lw-bad)}',
       '.lw-pre{margin:0;white-space:pre-wrap;word-break:break-word;color:var(--lw-fg2);',
       'font:var(--dsw-font-markdown-code-block-small,12px/18px ui-monospace,monospace);max-height:340px;overflow:auto}',
       '.lw-bar{display:flex;align-items:center;gap:9px;margin:0 0 10px;flex-wrap:wrap}',
@@ -375,23 +422,73 @@ window.__ModuleLoader__.load({
       //   卡片 = min(容器宽 - 2*side-clearance, card-max-width)
       // 只写 max-width 的话，窄屏下条子会比卡片宽出两个 side-clearance（32px），
       // 而那正是"没对齐"看起来最刺眼的地方。
+      // ── AICO 待办卡（spec：会话框提示条一体化品牌设计）──
+      // 之前是"一行灰底 + 两个胶囊 + 一个按钮"，像系统通知，不像产品。
+      // 现在是一张**AICO 卡片**：品牌字标 + 渐变印章 + 品牌色描边，
+      // 让人一眼认出这是 aico-wiki 在说话，而不是宿主在报错。
+      // 全部走 --lw-* 变量：换肤（莫兰迪/深色）时品牌色自动跟随。
       '.lw-pend{box-sizing:border-box;width:calc(100% - 2 * var(--dsh-composer-side-clearance,16px));',
       'max-width:var(--dsh-composer-card-max-width,780px);',
-      // 观感：**一行，不换行**。换行会让它变成两行灰块压在输入框上，很难看。
-      // 文字过长就截断 —— 这条子只需要传达"有几个数字"，不负责展示长句。
-      'display:flex;align-items:center;gap:6px;flex-wrap:nowrap;margin:0 auto 6px;padding:3px 8px;',
-      'border-radius:8px;background:var(--dsw-alias-interactive-bg-hover);',
+      // ★ 总高上限是底线：确认态带审核清单，内容想多高有多高，而 dock 座位
+      //   是按一行给的高度——不限高的话多出来的部分被容器切掉，圆角底边和
+      //   下边距全部消失（实测溢出）。限高后滚动发生在卡片**内部**，
+      //   底边（描边+圆角+投影）永远完整可见。
+      'max-height:min(46vh,360px);overflow:hidden;',
+      'display:flex;align-items:flex-start;gap:10px;flex-wrap:nowrap;margin:0 auto 10px;padding:7px 10px 9px 8px;',
+      'border-radius:12px;',
+      'border:1px solid color-mix(in srgb,var(--lw-brand) 24%,transparent);',
+      'background:linear-gradient(90deg,color-mix(in srgb,var(--lw-brand) 8%,var(--lw-surface)) 0%,var(--lw-surface) 52%);',
+      'box-shadow:0 2px 12px color-mix(in srgb,var(--lw-brand) 12%,transparent);',
       'color:var(--dsw-alias-label-secondary,var(--lw-fg2));',
-      // 字号走 DSH 的阶梯，不手写 —— 手写的结果就是 11/11.5/12/12.5/13 混在一个面板里
       'font:var(--dsw-font-xxs-12,12px/18px \'Noto Sans SC\',sans-serif)}',
-      '.lw-pend-txt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
-      '.lw-pend b{color:var(--dsw-alias-label-primary,var(--lw-fg));font-variant-numeric:tabular-nums;font-weight:600}',
+      // AICO 印章：品牌色渐变的圆角方块 + 单字。识别符号，不承担信息。
+      '.lw-pend-mark{flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;',
+      'border-radius:9px;color:#fff;font-weight:700;font-size:15px;',
+      'background:linear-gradient(135deg,var(--lw-brand) 0%,color-mix(in srgb,var(--lw-brand) 52%,#1a1a1c) 130%);',
+      'box-shadow:inset 0 1px 0 color-mix(in srgb,#fff 28%,transparent)}',
+      // 主区：品牌名一行 + 待办一行。品牌名与文字钉在顶部，滚动只发生在清单里。
+      // ★ min-height:0 是 flex 列里滚动能成立的前提——没有它子内容撑破上限。
+      '.lw-pend-main{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:1px;overflow:hidden}',
+      '.lw-pend-brand{flex:none;font:var(--dsw-font-xxxs-strong-11,700 10px/14px \'Noto Sans SC\',sans-serif);',
+      'letter-spacing:.22em;color:var(--lw-brand);user-select:none}',
+      '.lw-pend-txt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+      '.lw-pend b{color:var(--lw-brand);font-variant-numeric:tabular-nums;font-weight:700}',
       // 计数是可点的入口，但**不要**做成虚线下划线 —— 一行里两条虚线下划线很吵。
-      // 做成安静的小胶囊：平时看着就是文字，悬停才显出可点。
-      '.lw-pend-chip{flex:none;padding:0 6px;margin:0;border:0;border-radius:6px;background:none;',
+      // 做成安静的小胶囊：平时看着就是文字，悬停才显出可点（品牌色淡底）。
+      '.lw-pend-chip{flex:none;padding:0 6px;margin:0 -2px;border:0;border-radius:6px;background:none;',
       'color:inherit;cursor:pointer;font:inherit;white-space:nowrap}',
-      '.lw-pend-chip:hover{background:var(--dsw-alias-interactive-bg-hover);',
+      '.lw-pend-chip:hover{background:color-mix(in srgb,var(--lw-brand) 9%,transparent);',
       'color:var(--dsw-alias-label-primary,var(--lw-fg))}',
+      '.lw-pend-chip:focus-visible{outline:2px solid var(--lw-brand);outline-offset:1px}',
+      // 卡片里的主按钮走 **AICO** 的品牌色，不吃宿主的蓝色 primary——
+      // 否则"全部固化"是蓝的，卡片是红的，一张卡上两套品牌打架。
+      '.lw-pend .lw-btn.primary{border-color:transparent;background:var(--lw-brand);color:#fff;',
+      'box-shadow:0 1px 6px color-mix(in srgb,var(--lw-brand) 30%,transparent)}',
+      '.lw-pend .lw-btn.primary:hover:not(:disabled){background:color-mix(in srgb,var(--lw-brand) 86%,#1a1a1c)}',
+      '.lw-pend .lw-btn{height:26px}',
+      // 确认态的逐页审核清单：卡片向下生长，列表自身限高滚动。
+      // 确认态的逐页审核清单：清单是卡片里唯一滚动的地方（flex:1 + min-height:0
+      // 吃掉主区剩余高度），品牌行/文字/按钮全部钉死——底边永远不会被顶没。
+      '.lw-pend-list{flex:1;min-height:0;margin-top:5px;display:flex;flex-direction:column;gap:3px;overflow:auto;',
+      'scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--lw-brand) 30%,transparent) transparent}',
+      '.lw-pend-item{border:1px solid color-mix(in srgb,var(--lw-brand) 14%,transparent);border-radius:8px;background:var(--lw-surface)}',
+      '.lw-pend-itemhead{display:flex;align-items:center;gap:6px;width:100%;padding:3px 8px;border:0;background:none;',
+      'cursor:pointer;font:inherit;text-align:left;color:var(--dsw-alias-label-secondary,var(--lw-fg2))}',
+      '.lw-pend-itemhead:hover{background:color-mix(in srgb,var(--lw-brand) 6%,transparent)}',
+      '.lw-pend-itemhead:focus-visible{outline:2px solid var(--lw-brand);outline-offset:-2px}',
+      '.lw-pend-itemdot{flex:none;color:var(--lw-brand);font-size:8px;line-height:1}',
+      '.lw-pend-itemdot.off{color:var(--lw-fg4)}',
+      '.lw-pend-itemtitle{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;',
+      'color:var(--dsw-alias-label-primary,var(--lw-fg))}',
+      '.lw-pend-itemconf,.lw-pend-itemcat{flex:none;font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);',
+      'color:var(--lw-fg4);font-variant-numeric:tabular-nums;white-space:nowrap}',
+      '.lw-pend-itemcat{padding:0 5px;border:1px solid var(--lw-line);border-radius:99px}',
+      '.lw-pend-itemchev{flex:none;font-size:11px;color:var(--lw-brand);white-space:nowrap}',
+      '.lw-pend-itembody{padding:5px 9px 8px;border-top:1px solid var(--lw-line-soft);font-size:11.5px;line-height:1.6}',
+      '.lw-pend-preview{color:var(--lw-fg2);white-space:pre-wrap;word-break:break-word;max-height:140px;overflow:auto}',
+      '.lw-pend-srcline{margin-top:4px;display:flex;flex-wrap:wrap;gap:3px 8px;font-size:11px;align-items:center}',
+      '.lw-pend-srcline a{color:var(--lw-info);cursor:pointer;text-decoration:none}',
+      '.lw-pend-srcline a:hover{text-decoration:underline}',
       // Button(sm)：display/gap/height/padding/圆角/字号全部照 DSH 的 kz6gm 模块。
       // 分拣页签复用同一个类 —— 两处外观必须是同一套，否则又是一个"没同步"。
       '.lw-btn{flex:none;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;',
@@ -409,6 +506,42 @@ window.__ModuleLoader__.load({
       '.lw-btn.primary:hover:not(:disabled){background:var(--dsw-alias-button-primary-hover,var(--lw-brand))}',
       '.lw-btn.primary:active:not(:disabled){background:var(--dsw-alias-button-primary-hover,var(--lw-brand))}',
       '.lw-btn:disabled{cursor:not-allowed;opacity:.4}',
+      // ── 右上角「关闭」拉条开关（对齐 aida-lld pull-to-close）────────────
+      // 一条带滑块的轨道：真实拖拽（跟手，松手过半程关闭/否则 spring 回弹）
+      // 或单击直接 armed；armed 后整页播退场编排再 close。曲线与几何
+      // 照抄 aida-lld styles.ts 的 .aida-lld-pull 族，类名前缀换 lw-。
+      '.lw-head .lw-pull{flex:none;margin-left:auto;display:flex;align-items:center;gap:8px;height:30px;padding:0 4px 0 10px;border-radius:999px;cursor:pointer;user-select:none;touch-action:none;outline:none}',
+      '.lw-pull:focus-visible .lw-pull-track{outline:2px solid var(--dsw-alias-brand-primary,#2563eb);outline-offset:2px}',
+      '.lw-pull-label{min-width:44px;text-align:right;font-size:11px;font-weight:500;line-height:14px;letter-spacing:.06em;',
+      'color:var(--dsw-alias-label-secondary,var(--lw-fg3));',
+      'transition:color 260ms cubic-bezier(.32,.72,0,1),opacity 260ms cubic-bezier(.32,.72,0,1)}',
+      '.lw-pull:hover .lw-pull-label{color:var(--dsw-alias-label-primary,var(--lw-fg))}',
+      '.lw-pull.lw-pull-armed .lw-pull-label{color:var(--dsw-alias-brand-text,var(--dsw-alias-brand-primary,var(--lw-brand)))}',
+      '.lw-pull-track{position:relative;display:block;width:52px;height:22px;box-sizing:border-box;border-radius:999px;',
+      'border:1px solid var(--dsw-alias-border-l2,rgba(15,23,42,.16));',
+      'background:linear-gradient(180deg,color-mix(in srgb,var(--dsw-alias-bg-layer-1,#fff) 92%,transparent),color-mix(in srgb,var(--dsw-alias-label-primary,#0f172a) 5%,transparent)),var(--dsw-alias-bg-layer-2,#eef2f7);',
+      'box-shadow:inset 0 1px 2px rgba(15,23,42,.12);',
+      'transition:background-color 420ms cubic-bezier(.32,.72,0,1),border-color 420ms cubic-bezier(.32,.72,0,1),box-shadow 420ms cubic-bezier(.32,.72,0,1)}',
+      '.lw-pull:hover .lw-pull-track{border-color:color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 40%,transparent)}',
+      '.lw-pull.lw-pull-armed .lw-pull-track{border-color:color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 55%,transparent);',
+      'background:color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 18%,var(--dsw-alias-bg-layer-1,#fff));',
+      'box-shadow:inset 0 1px 2px rgba(15,23,42,.1),0 0 10px color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 30%,transparent)}',
+      '.lw-pull-knob{position:absolute;top:2px;left:2px;display:block;width:16px;height:16px;border-radius:50%;',
+      'background:radial-gradient(circle at 32% 28%,#fff 0%,#fff 42%,color-mix(in srgb,var(--dsw-alias-label-primary,#0f172a) 10%,#fff) 100%);',
+      'box-shadow:0 1px 3px rgba(15,23,42,.28),0 0 0 1px rgba(15,23,42,.08);',
+      'transform:translateX(0);',
+      'transition:transform 420ms cubic-bezier(.34,1.56,.64,1),box-shadow 420ms cubic-bezier(.32,.72,0,1)}',
+      '.lw-pull.lw-pull-armed .lw-pull-knob{transform:translateX(30px);',
+      'background:radial-gradient(circle at 32% 28%,#fff 0%,color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 20%,#fff) 100%);',
+      'box-shadow:0 1px 4px rgba(15,23,42,.3),0 0 0 1px color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 30%,transparent),0 0 8px color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 34%,transparent)}',
+      // armed 退场编排：滑块落位 → 头部其余元素与主内容下沉缩小淡出 → close
+      '.lw-center-closing>.lw-head>:not(.lw-pull){opacity:.45;transition:opacity 320ms cubic-bezier(.32,.72,0,1)}',
+      '.lw-center-closing>:not(.lw-head){opacity:0;transform:translateY(10px) scale(.988);',
+      'transition:opacity 320ms cubic-bezier(.32,.72,0,1),transform 320ms cubic-bezier(.32,.72,0,1)}',
+      '@media (prefers-reduced-motion:reduce){',
+      '.lw-pull-label,.lw-pull-track,.lw-pull-knob,',
+      '.lw-center-closing>.lw-head>:not(.lw-pull),',
+      '.lw-center-closing>:not(.lw-head){transition:none}}',
       // ── 分拣 ──
       // 用卡片而不是表格：这一页的决策输入是**正文**（"这页我还要不要"），
       // 而正文塞不进表格列。表头在这里只会挤掉真正要看的东西。
@@ -512,13 +645,28 @@ window.__ModuleLoader__.load({
       '.lw-graph-drawer h4{margin:0;font:var(--dsw-font-s-strong-14,600 14px/22px \'Noto Sans SC\',sans-serif)}',
       '.lw-graph-drawer .lw-graph-meta{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg3);display:flex;flex-wrap:wrap;gap:4px 10px}',
       '.lw-graph-empty{padding:40px 0;text-align:center;color:var(--lw-fg3)}',
-            'border:1px solid var(--lw-line);font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg2)}',
-      'display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}',
-      // ── 主面板全屏接管（fixed 覆盖整个 session 区域，含侧栏画布）──
-      // z-index 8000：盖过 session/canvas，但低于侧栏模态（.lw-mask 9000）——
-      // 后备的侧栏模态入口仍可在全屏接管之上打开。
-      '.lw-center-full{position:fixed;inset:0;z-index:8000;display:flex;flex-direction:column;',
-      'min-height:0;padding:20px 28px;box-sizing:border-box;background:#fff;overflow:auto}',
+      // ★ 这下面不许有"无选择器的声明碎片"：两条孤儿片段曾把 CSS 解析器的
+      //   错误恢复吞到下一条规则 —— .lw-center-full 整条丢失（display:flex /
+      //   overflow:auto 全没生效），全屏接管页因此整页无界撑高、表格底部被
+      //   窗口裁掉。加一条规则必须带完整选择器，出了界面前先跑
+      //   scripts/verify-theme-root.mjs 的 CSSOM 断言。
+      // ── 主面板接管（对齐 aida-welink：原位铺满 centerCol，不碰侧栏）──────
+      // 以前是 position:fixed inset:0 —— 会把侧栏一起盖掉。现在宿主 main
+      // 面板渲染在哪就铺满哪：flex:1 与 height:100% 双保险，侧栏保持可用。
+      // 铺满 session+canvas 区域靠下面的 :has 网格中和规则（同 welink）。
+      '.lw-center-full{position:relative;z-index:1;flex:1 1 auto;align-self:stretch;',
+      'width:100%;height:100%;min-height:0;min-width:0;display:flex;flex-direction:column;',
+      'box-sizing:border-box;background:var(--lw-surface);overflow:auto}',
+      // aida-ui 画布共存：接管期间画布列收为 0，session 列拿满（侧栏 280/56px 不动）
+      '[data-aida-canvas-balanced]:has(#aico-wiki-center),',
+      '[data-aida-canvas-maximized]:has(#aico-wiki-center){',
+      'grid-template-columns:280px minmax(0,1fr) 0px !important}',
+      '[data-aida-canvas-balanced][data-sidebar-collapsed]:has(#aico-wiki-center),',
+      '[data-aida-canvas-maximized][data-sidebar-collapsed]:has(#aico-wiki-center){',
+      'grid-template-columns:56px minmax(0,1fr) 0px !important}',
+      '[class*="frame"]:has(#aico-wiki-center) [class*="rightbarCol"],',
+      '[class*="frame"]:has(#aico-wiki-center) [data-rightbar-col],',
+      '[class*="frame"]:has(#aico-wiki-center) [data-side="rightbar"]{display:none !important}',
       // ── 插件页卡片（plugins.item / plugins.detail.section）──
       '.lw-plug-card{display:flex;align-items:center;gap:12px;padding:14px 16px;',
       'border:1px solid var(--lw-line);border-radius:12px;background:var(--lw-raise)}',
@@ -612,9 +760,10 @@ window.__ModuleLoader__.load({
       'recurring-error': '反复撞同一错误',
     }
 
-    /** 溯源（spec 06 修订）：把一条 source 归类并给出短显示。
+    /** 溯源（spec 06 修订 + 证据跳转扩展）：把一条 source 归类并给出短显示。
      *  三种形状：session://<id>（会话锚点，harvest 永远附）、http(s) URL、
-     *  其余一律按文档路径。纯函数，导出可穷举断言。 */
+     *  其余一律按文档路径。文档路径允许带页码锚（path.pdf#page=12 或 #p=12），
+     *  解析出的 page 供「点击打开并跳页」用。纯函数，导出可穷举断言。 */
     function sourceKind(s) {
       var v = String(s ?? '')
       if (v.startsWith('session://')) {
@@ -631,9 +780,39 @@ window.__ModuleLoader__.load({
         }
       }
       if (!v) return { kind: 'doc', label: '文档', short: '(空)', full: v }
-      var base = v.replace(/\\/g, '/').split('/').filter(Boolean).pop()
-      return { kind: 'doc', label: '文档', short: (base || v).slice(0, 24), full: v }
+      // 页码锚：#page=12 / #p=12（模型在 sources 里标注 PDF 页码的约定形状）。
+      var pm = v.match(/#p(?:age)?=(\d+)\s*$/i)
+      var page = pm ? Number(pm[1]) : 0
+      var pure = pm ? v.slice(0, pm.index) : v
+      var base = pure.replace(/\\/g, '/').split('/').filter(Boolean).pop()
+      return { kind: 'doc', label: '文档', short: ((base || pure) + (page ? ' ·P' + page : '')).slice(0, 26), full: v, docPath: pure, page: page }
     }
+
+    /** 轻提示：右下角一条，3 秒自灭。开文档成功/失败都不打断当前页面。 */
+    function toast(text, bad) {
+      try {
+        var el = document.createElement('div')
+        el.className = 'lw-toast' + (bad ? ' lw-toast-bad' : '')
+        el.textContent = text
+        document.body.appendChild(el)
+        setTimeout(function () { el.remove() }, 3000)
+      } catch (e) { /* 无 body 时（离线断言）静默 */ }
+    }
+
+    var OPEN_DOC_API = '/aico-local-wiki/api/open-doc'
+    /** 点证据开文档：POST /api/open-doc，服务端用默认程序打开；
+     *  PDF 带页码时走浏览器 #page=N 直接跳页。结果用 toast 反馈。 */
+    function openDoc(sk) {
+      if (!sk || sk.kind !== 'doc' || !sk.docPath) return Promise.resolve()
+      return post(OPEN_DOC_API, { path: sk.docPath, page: sk.page || 0 }).then(function (r) {
+        if (r.j && r.j.ok) {
+          toast('已打开' + (sk.page ? '（第 ' + sk.page + ' 页）' : '') + '：' + sk.docPath.split(/[\\/]/).pop())
+        } else {
+          toast('打开失败：' + ((r.j && r.j.error) || r.error || ('HTTP ' + r.status)), true)
+        }
+      })
+    }
+    function openDocSource(full) { return openDoc(sourceKind(full)) }
 
     /** 一行溯源 chips：最多 2 个 + 「+N」，title 带全量。 */
     function SourceChips(props) {
@@ -643,6 +822,14 @@ window.__ModuleLoader__.load({
       var rest = list.length - shown.length
       return h('span', { className: 'lw-srcline', title: list.map(function (x) { return x.label + '：' + x.full }).join('\n') },
         shown.map(function (x, i) {
+          if (x.kind === 'doc' && x.docPath) {
+            // 本地文档：点击交给服务端打开；带页码时直接跳页。
+            return h('a', {
+              key: i, className: 'lw-srcchip lw-src-doc', href: '#',
+              title: x.full + (x.page ? '（点击打开并跳到第 ' + x.page + ' 页）' : '（点击打开）'),
+              onClick: function (e) { e.preventDefault(); e.stopPropagation(); openDoc(x) },
+            }, x.label + ' ' + x.short)
+          }
           return x.href
             ? h('a', { key: i, className: 'lw-srcchip lw-src-' + x.kind, href: x.href, target: '_blank', rel: 'noreferrer', onClick: function (e) { e.stopPropagation() } }, x.label + ' ' + x.short)
             : h('span', { key: i, className: 'lw-srcchip lw-src-' + x.kind }, x.label + ' ' + x.short)
@@ -1227,6 +1414,16 @@ window.__ModuleLoader__.load({
       var busy = busyState[0], setBusy = busyState[1]
       var kfState = useState('all')
       var kFilter = kfState[0], setKFilter = kfState[1]
+      // KPI 带跳转进来的过滤载荷：nonce 在才动作——没有 nonce 的载荷
+      // （首次挂载、其它入口跳入）不该动用户自己选的筛选。
+      var seenJumpState = useState(null)
+      var seenJump = seenJumpState[0]
+      useEffect(function () {
+        var j = props.kpiJump
+        if (!j || j === seenJump) return
+        seenJumpState[1](j)
+        if (j.filter && filterById(KFILTERS, j.filter)) setKFilter(j.filter)
+      }, [props.kpiJump, seenJump])
 
       // 图谱跳转进来的载荷：展开并取正文。focusId 变 null 不动作——
       // 「没有要展开的」不是「把已展开的收起来」，别把两件事搅在一起。
@@ -1578,9 +1775,14 @@ window.__ModuleLoader__.load({
           var sk = sourceKind(u)
           return h('li', { key: i },
             h('span', { className: 'lw-srcchip lw-src-' + sk.kind }, sk.label),
-            sk.href
-              ? h('a', { href: sk.href, target: '_blank', rel: 'noreferrer noopener', title: sk.full }, sk.full)
-              : h('span', { className: 'lw-src', title: sk.full }, sk.full))
+            sk.kind === 'doc' && sk.docPath
+              ? h('a', {
+                  href: '#', title: sk.full + (sk.page ? '（点击打开并跳到第 ' + sk.page + ' 页）' : '（点击打开）'),
+                  onClick: function (e) { e.preventDefault(); openDoc(sk) },
+                }, sk.full)
+              : sk.href
+                ? h('a', { href: sk.href, target: '_blank', rel: 'noreferrer noopener', title: sk.full }, sk.full)
+                : h('span', { className: 'lw-src', title: sk.full }, sk.full))
         })) : h('p', { className: 'lw-note c-bad' }, '这条知识没有来源。')
       )
     }
@@ -2127,7 +2329,7 @@ window.__ModuleLoader__.load({
         node.append('title').text(function (n) { return n.title + ' · ' + n.category + ' · 度 ' + n.degree + ' · 命中 ' + n.hits })
 
         var label = root.append('g').selectAll('text').data(nodes).join('text')
-          .text(function (n) { return graphLabelCut(n.title) })
+          .text(function (n) { return graphLabelCut(n.label || n.title) })
           .attr('text-anchor', 'middle')
           .attr('fill', function (n) { return n.id === props.sel ? '#1a1a1c' : '#566472' })
           .attr('font-weight', function (n) { return n.id === props.sel ? 700 : 400 })
@@ -2403,7 +2605,7 @@ window.__ModuleLoader__.load({
                           textAnchor: 'middle',
                           fill: n.id === sel ? 'var(--lw-fg)' : 'var(--lw-fg2)',
                           opacity: dimmed ? 0.15 : 1,
-                        }, graphLabelCut(n.title))
+                        }, graphLabelCut(n.label || n.title))
                       : null
                   )
                 })
@@ -2506,6 +2708,87 @@ window.__ModuleLoader__.load({
       { grp: 'OPERATION', ids: ['supply', 'capabilities', 'models'] },
     ]
 
+    /** 主题组：id 对应 CSS 里的 .lw-shell[data-theme=…]变量组。
+     *  纯数据，导出可断言（每个 id 必须在 CSS 里有对应块）。 */
+    var THEMES = [
+      { id: 'default', label: '华为红' },
+      { id: 'morandi', label: '莫兰迪' },
+      { id: 'dark', label: '深色' },
+    ]
+    var THEME_KEY = 'lw-theme'
+    function loadTheme() {
+      try {
+        var t = localStorage.getItem(THEME_KEY)
+        return filterById(THEMES, t) ? t : 'default'
+      } catch (e) { return 'default' }
+    }
+    function saveTheme(t) {
+      try { localStorage.setItem(THEME_KEY, t) } catch (e) { /* 记不住不挡切换 */ }
+    }
+
+    var ROOT_API = '/aico-local-wiki/api/switch-root'
+    /** 知识库切换：显示当前路径，「点击」展开输入框；提交后 POST 切换并刷新。
+     *  服务端校验目录、给新库铺骨架、并把选择持久化（重启不丢）。 */
+    function RootSwitch(props) {
+      var root = (props.state && props.state.app && props.state.app.wikiRoot) || ''
+      var editState = useState(false)
+      var editing = editState[0], setEditing = editState[1]
+      var valState = useState('')
+      var val = valState[0], setVal = valState[1]
+      var busyState = useState(false)
+      var busy = busyState[0], setBusy = busyState[1]
+      var submit = function () {
+        var p = String(val || '').trim()
+        if (!p || busy) return
+        setBusy(true)
+        post(ROOT_API, { path: p }).then(function (r) {
+          setBusy(false)
+          if (r.j && r.j.ok) {
+            toast('已切换知识库：' + (r.j.wikiRoot || p))
+            setEditing(false)
+            props.onChanged && props.onChanged()
+          } else {
+            toast('切换失败：' + ((r.j && r.j.error) || r.error || ('HTTP ' + r.status)), true)
+          }
+        })
+      }
+      if (!editing) {
+        return h('button', {
+          type: 'button',
+          className: 'lw-rootswitch',
+          title: root + '（点击更换知识库）',
+          onClick: function () { setVal(root); setEditing(true) },
+        },
+          h('span', { className: 'lw-rootswitch-n' }, '库'),
+          h('span', { className: 'lw-rootswitch-p' }, root || '连接中…'))
+      }
+      return h('div', { className: 'lw-rootswitch-edit' },
+        h('input', {
+          className: 'lw-input',
+          value: val,
+          placeholder: '输入知识库目录完整路径',
+          autoFocus: true,
+          onChange: function (e) { setVal(e.target.value) },
+          onKeyDown: function (e) {
+            if (e.key === 'Enter') submit()
+            if (e.key === 'Escape') setEditing(false)
+          },
+        }),
+        h('div', { className: 'lw-rootswitch-acts' },
+          h('button', { type: 'button', className: 'lw-mini', disabled: busy, onClick: submit }, busy ? '切换中…' : '切换'),
+          h('button', { type: 'button', className: 'lw-mini', onClick: function () { setEditing(false) } }, '取消'),
+          root ? h('button', {
+            type: 'button', className: 'lw-mini',
+            title: '清除切换记录，恢复宿主配置的默认库',
+            onClick: function () {
+              post(ROOT_API, { reset: true }).then(function (r) {
+                if (r.j && r.j.ok) { toast('已恢复默认知识库'); setEditing(false); props.onChanged && props.onChanged() }
+                else toast('恢复失败：' + ((r.j && r.j.error) || r.error), true)
+              })
+            },
+          }, '恢复默认') : null))
+    }
+
     /** 导航徽标：只给「有待办」的页——数字说有事，导航就该带计数。 */
     function navBadge(tab, s) {
       if (!s) return 0
@@ -2558,7 +2841,8 @@ window.__ModuleLoader__.load({
 
     /** KPI 数字带条目：**复用原 repo 的状态设计**（CLS 表 + StateDot）。
      *  每项带 {n, label, state}——state 直接喂 Dot()，与知识页签里
-     *  同一状态的点/字色完全一致：一个状态在任何视图里长得一样。 */
+     *  同一状态的点/字色完全一致：一个状态在任何视图里长得一样。
+     *  filter 是点击这一格后知识页签要套的 KFILTERS 档（null=只切过去）。 */
     function kpiItems(s) {
       var k = (s && s.knowledge) || {}
       var counts = k.counts || {}
@@ -2566,12 +2850,12 @@ window.__ModuleLoader__.load({
       // 未确认按 KFILTERS 语义并入新页；疑似有害与观察中并成「有反证」
       // （warn 点）——KPI 带要的是「该关注什么」，细分档位留给知识页签。
       return [
-        { n: committed, label: '已固化', state: null, numCls: 'r' },
-        { n: (k.staged || []).length, label: '待固化', state: null, numCls: 'r' },
-        { n: num0(counts.confirmed), label: CLS.confirmed.label, state: CLS.confirmed.state, numCls: '' },
-        { n: num0(counts.unconfirmed) + num0(counts.new), label: CLS.unconfirmed.label, state: CLS.unconfirmed.state, numCls: '' },
-        { n: num0(counts.suspect) + num0(counts['suspect-watch']), label: '有反证', state: 'error', numCls: '' },
-        { n: num0(counts.dead), label: CLS.dead.label, state: CLS.dead.state, numCls: '' },
+        { n: committed, label: '已固化', state: null, numCls: 'r', filter: 'all' },
+        { n: (k.staged || []).length, label: '待固化', state: null, numCls: 'r', filter: null },
+        { n: num0(counts.confirmed), label: CLS.confirmed.label, state: CLS.confirmed.state, numCls: '', filter: 'confirmed' },
+        { n: num0(counts.unconfirmed) + num0(counts.new), label: CLS.unconfirmed.label, state: CLS.unconfirmed.state, numCls: '', filter: 'unconfirmed' },
+        { n: num0(counts.suspect) + num0(counts['suspect-watch']), label: '有反证', state: 'error', numCls: '', filter: 'suspect' },
+        { n: num0(counts.dead), label: CLS.dead.label, state: CLS.dead.state, numCls: '', filter: null },
       ]
     }
 
@@ -2601,6 +2885,22 @@ window.__ModuleLoader__.load({
         setFocusNode(id)
         setTab('graph')
       }, [setTab])
+      // KPI 带 → 知识页签的过滤载荷：filter 是 KFILTERS 档，nonce 让
+      // 「连点同一格」也能把用户手动改过的筛选重置回这一档——
+      // 否则第二次点击因 prop 未变而被 effect 忽略，看起来像坏了。
+      var kpiJumpState = useState(null)
+      var kpiJump = kpiJumpState[0], setKpiJump = kpiJumpState[1]
+      var onKpiJump = useCallback(function (f) {
+        setKpiJump({ filter: f, nonce: (kpiJump && kpiJump.nonce || 0) + 1 })
+        setTab('knowledge')
+      }, [kpiJump, setTab])
+      // 主题：选择挂在 .lw-shell 的 data-theme 上（变量组在 CSS 顶部），
+      // 偏好记 localStorage —— 下次打开还是上次选的皮肤。
+      var themeState = useState(loadTheme)
+      var theme = themeState[0], setTheme = themeState[1]
+      var onTheme = useCallback(function (t) {
+        setTheme(t); saveTheme(t)
+      }, [setTheme])
 
       var load = useCallback(function () {
         // 受控模式不发请求：离线渲染里没有 fetch，也不该去打扰真实端点。
@@ -2643,16 +2943,10 @@ window.__ModuleLoader__.load({
       var tabNo = {}
       for (var ti = 0; ti < TABS.length; ti++) tabNo[TABS[ti].id] = ('0' + (ti + 1)).slice(-2)
 
-      return h('div', { className: 'lw-shell' },
+      return h('div', { className: 'lw-shell', 'data-theme': theme },
         h('div', { className: 'lw-head' },
           h('span', { className: 'lw-headicon' }, Ico('IconSkillOutline16', 16)),
-          h('span', { className: 'lw-title' }, 'aico-wiki'),
-          // state 存在但 app 缺失是会发生的（接口半途出错、离线渲染）。
-          // 直接取 state.app.wikiRoot 会当场抛，整棵树跟着完蛋。
-          h('span', {
-            className: 'lw-path',
-            title: (state && state.app && state.app.wikiRoot) || '',
-          }, (state && state.app && state.app.wikiRoot) || (state ? '（没有 wikiRoot）' : '连接中…'))
+          h('span', { className: 'lw-title' }, 'aico-wiki')
         ),
         h('div', { className: 'lw-work' },
           h('nav', {
@@ -2668,7 +2962,25 @@ window.__ModuleLoader__.load({
                   return t ? navItem({ id: t.id, label: t.label, no: tabNo[t.id] }) : null
                 })
               )
-            })
+            }),
+            // 侧边栏底部的三件套：主题选择 / 换库入口 / 知识库路径。
+            h('div', { className: 'lw-sidebottom' },
+              h('div', { className: 'lw-siderow' },
+                h('span', { className: 'lw-sidelabel' }, '主题'),
+                h('select', {
+                  className: 'lw-sel',
+                  value: theme,
+                  'aria-label': '界面主题',
+                  onChange: function (e) { onTheme(e.target.value) },
+                }, THEMES.map(function (t) {
+                  return h('option', { key: t.id, value: t.id }, t.label)
+                }))),
+              h(RootSwitch, { state: state, onChanged: load }),
+              h('div', {
+                className: 'lw-sidepath',
+                title: (state && state.app && state.app.wikiRoot) || '',
+              }, (state && state.app && state.app.wikiRoot) || (state ? '（没有 wikiRoot）' : '连接中…'))
+            )
           ),
           h('div', { className: 'lw-main' },
             // 面包屑：导航分组 / 当前页（观点句标题已承担「这页说什么」，
@@ -2682,7 +2994,15 @@ window.__ModuleLoader__.load({
               })),
             state ? h('div', { className: 'lw-kpirow' },
               kpiItems(state).map(function (it, i) {
-                return h('div', { key: i, className: 'lw-kpi' },
+                // KPI 格可点：点哪一档，知识页签就按那一档筛好。
+                var clickable = !!state.knowledge
+                return h('button', {
+                  key: i,
+                  type: 'button',
+                  className: 'lw-kpi lw-kpi-btn',
+                  title: clickable ? ('点击查看' + it.label + (it.filter ? '（筛选后）' : '')) : undefined,
+                  onClick: clickable ? function () { onKpiJump(it.filter) } : undefined,
+                },
                   h('div', { className: 'lw-kpi-n ' + (it.numCls || '') },
                     it.state ? h(Dot, { state: it.state }) : null,
                     h('span', null, num(it.n))),
@@ -2696,7 +3016,7 @@ window.__ModuleLoader__.load({
                   ? h('div', { className: 'lw-empty' }, '读取中…')
                   : tab === 'capabilities'
                     ? h(CapabilitiesTab, { state: state, onChanged: load, initialSeg: props.initialSeg })
-                    : tab === 'knowledge' ? h(KnowledgeTab, { state: state, onChanged: load, focusId: focusId, onGotoGraph: onGotoGraph })
+                    : tab === 'knowledge' ? h(KnowledgeTab, { state: state, onChanged: load, focusId: focusId, onGotoGraph: onGotoGraph, kpiJump: kpiJump })
                       : tab === 'graph' ? h(GraphTab, { state: state, onChanged: load, onInspect: onInspect, focusNode: focusNode })
                         : tab === 'triage' ? h(TriageTab, { onChanged: load })
                           : tab === 'models' ? h(ModelsTab, { state: state, onChanged: load })
@@ -3108,6 +3428,69 @@ window.__ModuleLoader__.load({
       )
     }
 
+    var PEND_PAGE_API = '/aico-local-wiki/api/page'
+    /** 待固化清单里的一页：标题 + 可展开的正文预览。
+     *  固化是把蒸馏产物升入 L1 的闸门，闸门要人**看得见内容**才守得住——
+     *  所以确认态必须能逐页翻，而不是只给一个总数。 */
+    function PendItem(props) {
+      var x = props.item
+      var openState = useState(false)
+      var open = openState[0], setOpen = openState[1]
+      var dState = useState(null)          // /api/page 的正文数据
+      var d = dState[0]
+      var errState = useState(null)
+      var err = errState[0]
+      var toggle = function () {
+        var next = !open
+        setOpen(next)
+        if (next && !d && !err) {
+          getJson(PEND_PAGE_API + '?id=' + encodeURIComponent(x.id)).then(function (r) {
+            if (r.j && r.j.ok) dState[1](r.j)
+            else errState[1]((r.j && r.j.error) || r.error || ('HTTP ' + r.status))
+          })
+        }
+      }
+      var body = null
+      if (open) {
+        var inner = null
+        if (err) inner = h('span', { className: 'c-bad' }, '读不到正文：' + err)
+        else if (!d) inner = h('span', { className: 'c-dim' }, '读取正文…')
+        else {
+          var text = String(d.body || '（无正文）')
+          inner = h('div', { className: 'lw-pend-preview' }, text.slice(0, 800) + (text.length > 800 ? '…' : ''))
+        }
+        var srcLine = null
+        if (d) {
+          var srcs = Array.isArray(d.sources) ? d.sources : []
+          if (srcs.length === 0) {
+            srcLine = h('div', { className: 'lw-pend-srcline c-bad' }, '这条知识没有来源——按闸门它本就不该出现在这里。')
+          } else {
+            srcLine = h('div', { className: 'lw-pend-srcline' },
+              h('span', { className: 'c-dim' }, '来源：'),
+              srcs.map(function (u, i) {
+                var sk = sourceKind(u)
+                if (sk.kind === 'doc' && sk.docPath) {
+                  return h('a', { key: i, href: '#', title: sk.full + '（点击打开）', onClick: function (e) { e.preventDefault(); openDoc(sk) } }, sk.short)
+                }
+                return h('span', { key: i, title: sk.full }, sk.short)
+              }))
+          }
+        }
+        body = h('div', { className: 'lw-pend-itembody' }, inner, srcLine)
+      }
+      return h('div', { className: 'lw-pend-item' },
+        h('button', { type: 'button', className: 'lw-pend-itemhead', 'aria-expanded': open ? 'true' : 'false', onClick: toggle },
+          h('span', { className: 'lw-pend-itemdot' + (x.ready ? '' : ' off') }, '●'),
+          h('span', { className: 'lw-pend-itemtitle', title: x.title }, x.title || x.id),
+          x.confidence != null ? h('span', { className: 'lw-pend-itemconf' }, '置信 ' + x.confidence) : null,
+          x.category ? h('span', { className: 'lw-pend-itemcat' }, x.category) : null,
+          h('span', { className: 'lw-pend-itemchev' }, open ? '收起' : '查看')),
+        body)
+    }
+
+    /** 待办条弹出的"已见基线"（模块级：跨挂载记住上次见过的待办总数）。 */
+    var PEND_SEEN = { total: null }
+
     /**
      * 输入框上方的常驻提示条（座位：conversation.input.dock —— 它给的就是一行）。
      *
@@ -3122,6 +3505,10 @@ window.__ModuleLoader__.load({
      */
     function PendingBar(props) {
       ensureStyle()
+      // 欢迎页（hero，无会话）不渲染：座位注入的 inSession=false 说明还没进任何
+      // 会话，此时输入框上方不该压一条实时提醒——那正是截图里"初始页顶部多一条"
+      // 的来源。受控模式（props.pending，离线渲染/截图）不受此限制。
+      if (props && props.inSession === false && props.pending === undefined) return null
       var p = usePending()
       // 受控模式：调用方直接给数据（离线渲染与截图用）——与 PanelBody 同一套惯例。
       // 服务端渲染不跑 useEffect，不给这个口子就永远只能渲染出"空"，
@@ -3136,7 +3523,30 @@ window.__ModuleLoader__.load({
 
       var d = p.data
       var total = pendingTotal(d)
-      if (!d || total === 0) return null
+      // ── 瞬态化：不再"有待办就常驻"，只在**新待办出现的那一刻**弹出一次 ──
+      // 以前 total>0 就常驻输入框上方，用户永远学不会忽略它。现在：
+      // 计数比上次见过的多 → 弹出，8 秒后自动收起（确认/固化流程打开时不收）；
+      // 计数回落（处理掉了）→ 立即收起并把基线抹平。seenRef 记"上次见过多少"。
+      var freshState = useState(false)
+      var fresh = freshState[0], setFresh = freshState[1]
+      var seenRef = useRef(PEND_SEEN.total)
+      var flowRef = useRef(false)
+      useEffect(function () { flowRef.current = !!(ask || working || note) }, [ask, working, note])
+      useEffect(function () {
+        if (!d) return
+        var prev = seenRef.current
+        if (prev == null) { seenRef.current = total; return }  // 首次拿到数据不算"新"
+        if (total > prev) {
+          seenRef.current = total
+          setFresh(true)
+          var t = window.setTimeout(function () {
+            if (!flowRef.current) setFresh(false)   // 确认/固化进行中不打断
+          }, 8000)
+          return function () { window.clearTimeout(t) }
+        }
+        if (total < prev) { seenRef.current = total; setFresh(false) }
+      }, [total])
+      if (!d || total === 0 || !fresh) return null
 
       var ready = d.stagedReady || 0
       var triage = (d.trash || 0) + (d.rejected || 0)
@@ -3172,14 +3582,14 @@ window.__ModuleLoader__.load({
         chips.push(h('button', {
           key: 's', type: 'button', className: 'lw-pend-chip',
           title: '打开「知识」页签，逐页看再决定固化',
-          onClick: function () { benchStore.set({ open: true, tab: 'knowledge' }) },
+          onClick: function () { setFresh(false); benchStore.set({ open: true, tab: 'knowledge' }) },
         }, h('b', null, String(d.stagedTotal)), ' 页待固化'))
       }
       if (triage > 0) {
         chips.push(h('button', {
           key: 't', type: 'button', className: 'lw-pend-chip',
           title: '打开「分拣」页签，恢复或永久删除',
-          onClick: function () { benchStore.set({ open: true, tab: 'triage' }) },
+          onClick: function () { setFresh(false); benchStore.set({ open: true, tab: 'triage' }) },
         }, h('b', null, String(triage)), ' 个待分拣'))
       }
 
@@ -3190,10 +3600,20 @@ window.__ModuleLoader__.load({
         role: 'status',
         'aria-live': 'polite',
       },
-        h('span', { className: 'lw-pend-txt' },
-          ask
-            ? '确认固化这 ' + ready + ' 页？固化后它们立刻参与自动召回。'
-            : (note ? note : chips.reduce(function (acc, x) { return acc.concat(acc.length ? [' · '] : [], [x]) }, []))
+        // AICO 印章 + 品牌名：这张卡片的身份。数字和按钮才是内容。
+        h('span', { className: 'lw-pend-mark', 'aria-hidden': 'true' }, 'A'),
+        h('div', { className: 'lw-pend-main' },
+          h('span', { className: 'lw-pend-brand' }, 'AICO · WIKI'),
+          h('span', { className: 'lw-pend-txt' },
+            ask
+              ? '确认固化这 ' + ready + ' 页？固化后它们立刻参与自动召回。'
+              : (note ? note : chips.reduce(function (acc, x) { return acc.concat(acc.length ? [' · '] : [], [x]) }, []))
+          ),
+          // 确认态附上逐页清单：审核要看得见内容，总数不够拍板。
+          ask && Array.isArray(d.staged) && d.staged.length
+            ? h('div', { className: 'lw-pend-list' },
+              d.staged.map(function (x) { return h(PendItem, { key: x.id, item: x }) }))
+            : null
         ),
         ask ? h('button', {
           type: 'button', className: 'lw-btn primary', disabled: working,
@@ -3406,27 +3826,101 @@ window.__ModuleLoader__.load({
 
     /** 主面板内容：fixed 全屏接管整个 session 区域（含侧栏画布，spec 04 修订）。
      *  注入面（宿主平铺为 props）：close()、entryTab()（命令选中的页签）。
-     *  agent 侧工具（wiki_recall 等）注册在宿主进程，不受 UI 接管影响。 */
+     *  agent 侧工具（wiki_recall 等）注册在宿主进程，不受 UI 接管影响。
+     *  右上角关闭入口对齐 aida-lld：「关闭」拉条开关（真实拖拽，松手过半程
+     *  关闭 / 否则 spring 回弹；单击直接 armed）→ 退场编排 → close()。
+     *  退出机制不变：close() → panelDeactivate → layout.selectPanel(null)，
+     *  main 注册常驻不注销（关掉还能再开）。 */
     function AicoWikiCenter(props) {
       ensureStyle()
       var entryTab = (typeof props.entryTab === 'function' ? props.entryTab() : props.entryTab) || 'graph'
+      // 拉条几何（与 aida-lld 一致）：滑块直径 16 + 内边距 2，最大位移 30px。
+      var KNOB_MAX = 30
+      var armedState = useState(false)
+      var armed = armedState[0], setArmed = armedState[1]
+      var armedRef = useRef(false)
+      var knobRef = useRef(null)
+      var dragRef = useRef({ active: false, moved: false, startX: 0, delta: 0 })
+      /** 直接写内联 transform；transition=false 时跟手（拖拽中）。 */
+      var setKnob = function (x, transition) {
+        if (!knobRef.current) return
+        knobRef.current.style.transition = transition ? '' : 'none'
+        knobRef.current.style.transform = 'translateX(' + x + 'px)'
+      }
+      var closeNow = function () { try { props.close && props.close() } catch (err) {} }
+      /** armed：滑块滑向末端 + 退场编排(320ms)播完再退出（对齐 lld 的 500ms 节奏）。 */
+      var trigger = function () {
+        if (armedRef.current) return
+        armedRef.current = true
+        setArmed(true)
+        if (knobRef.current) {
+          knobRef.current.style.transition = ''
+          knobRef.current.style.transform = 'translateX(' + KNOB_MAX + 'px)'
+        }
+        window.setTimeout(closeNow, 500)
+      }
+      var onPointerDown = function (e) {
+        if (armedRef.current) return
+        dragRef.current = { active: true, moved: false, startX: e.clientX, delta: 0 }
+        e.currentTarget.setPointerCapture(e.pointerId)
+        setKnob(0, false)
+      }
+      var onPointerMove = function (e) {
+        var d = dragRef.current
+        if (!d.active) return
+        var delta = Math.max(0, Math.min(KNOB_MAX, e.clientX - d.startX))
+        if (delta > 2) d.moved = true
+        d.delta = delta
+        setKnob(delta, false)
+      }
+      var onPointerUp = function (e) {
+        var d = dragRef.current
+        if (!d.active) return
+        d.active = false
+        try { e.currentTarget.releasePointerCapture(e.pointerId) } catch (err) {}
+        if (d.delta > KNOB_MAX * 0.5) trigger()      // 拉过半程：armed + 退场
+        else setKnob(0, true)                        // 未过半程：spring 回弹
+      }
+      var onClick = function () {
+        if (dragRef.current.moved) { dragRef.current.moved = false; return }
+        trigger()
+      }
       // Esc 退出：全屏接管后宿主的返回路径（侧栏切换）被盖住，键盘必须有独立退路。
       // SSR/离线渲染没有 document，静默跳过。
       useEffect(function () {
         if (typeof document === 'undefined' || !props.close) return
-        var onKey = function (e) { if (e.key === 'Escape') { try { props.close() } catch (err) {} } }
+        var onKey = function (e) { if (e.key === 'Escape') closeNow() }
         document.addEventListener('keydown', onKey)
         return function () { document.removeEventListener('keydown', onKey) }
       }, [props.close])
-      return h('div', { id: 'aico-wiki-center', className: 'lw-center-full lw-root' },
+      return h('div', {
+        id: 'aico-wiki-center',
+        className: 'lw-center-full lw-root' + (armed ? ' lw-center-closing' : ''),
+      },
         h('div', { className: 'lw-head' },
           h('span', { className: 'lw-headicon' }, WikiIcon(16)),
           h('span', { className: 'lw-title' }, 'aico-wiki'),
-          h('span', { className: 'lw-tabsum' }, '本地知识库工作台 · Esc 退出'),
-          h(Btn, {
-            style: { marginLeft: 'auto' },
-            onClick: function () { props.close && props.close() },
-          }, '关闭工作台')
+          h('span', { className: 'lw-tabsum' }, '本地知识库工作台'),
+          // 右上角「关闭」拉条（对齐 aida-lld）：拖拽或单击关闭，Esc 仍可退出。
+          h('div', {
+            className: 'lw-pull' + (armed ? ' lw-pull-armed' : ''),
+            role: 'switch',
+            'aria-checked': armed ? 'true' : 'false',
+            'aria-label': '关闭工作台（返回会话）',
+            tabIndex: 0,
+            title: '拉动或点击关闭工作台',
+            onPointerDown: onPointerDown,
+            onPointerMove: onPointerMove,
+            onPointerUp: onPointerUp,
+            onKeyDown: function (e) {
+              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); trigger() }
+            },
+            onClick: onClick,
+          },
+            h('span', { className: 'lw-pull-label' }, armed ? '正在返回' : '关闭'),
+            h('span', { className: 'lw-pull-track', 'aria-hidden': true },
+              h('span', { ref: knobRef, className: 'lw-pull-knob' }))
+          )
         ),
         // key=entryTab：命令再次选中别的页签时强制重挂载，让 initialTab 生效。
         // PanelBody 的页签是内部 state，外部换 initialTab 不重挂载就没有效果。
@@ -3517,14 +4011,9 @@ window.__ModuleLoader__.load({
       } catch (e) {
         try { console.error('[aico-local-wiki] wiki_recall 卡片座位不可用：', e) } catch (err) {}
       }
-      ctx.slots.inject('sidebar.footer.action', function () {
-        return ctx.slots.register({
-          name: 'sidebar.footer.action',
-          id: 'aico-local-wiki-entry',
-          order: 58,
-          locale: name,
-        }, FooterEntry)
-      })
+      // 侧边栏入口（sidebar.footer.action）已按需求移除：
+      // 打开工作台的入口收敛为 /aico-wiki 命令 + 插件页卡片。
+      // FooterEntry 组件保留（verify 脚本与后备模态还在引用），只是不再注册座位。
       // 输入框上方的待办提示条。座位给的就是"独占一整行"，正是这条子要的。
       //
       // 座位规则（来自 DSH 的 slot-catalog）：注册到**未声明**的插槽会抛异常，
@@ -3537,6 +4026,10 @@ window.__ModuleLoader__.load({
             id: 'aico-local-wiki-pending',
             order: 40,
             locale: name,
+            // 座位契约：inject 收到当前 sessionId，欢迎页（hero）没有会话时是
+            // undefined。待办条是"该回工作台拍板了"的提醒，欢迎页连工作台都
+            // 还没进，提醒只会挡在输入框上方——注入 inSession 供组件判定。
+            inject: function (sessionId) { return { inSession: sessionId != null } },
           }, PendingBar)
         })
       } catch (e) {
@@ -3699,6 +4192,10 @@ window.__ModuleLoader__.load({
       titleParts, kpiItems, navBadge, NAVGROUPS,
       // 溯源判据（spec 06 修订）：来源三形状归类。
       sourceKind,
+      // 证据跳转：页码锚解析是纯函数，openDocSource 交给在线冒烟。
+      openDocSource,
+      // 换肤与换库：THEMES 的每个 id 必须有对应 CSS 变量组（离线断言）。
+      THEMES, loadTheme, saveTheme,
     }
 
     /**

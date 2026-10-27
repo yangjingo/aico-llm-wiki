@@ -5,3 +5,13 @@ node_modules/
 # 离线预览产物（ui-snapshot.mjs / ui-probe.mjs 生成）。
 # 它们是可重建的派生物，而且会很大 —— 不进版本库。
 .snapshots/
+
+# 知识库运行数据（pages/staged/gaps 等）是本机示例/个人数据，不进版本库。
+# 结构由 ensureRepo 按需重建；950 mock 与环境页只留在本地。
+pages/
+staged/
+gaps/
+.index/
+usage.json
+struggle.jsonl
+wiki.config.json

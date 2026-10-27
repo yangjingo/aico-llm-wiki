@@ -14,6 +14,7 @@ DSH 的「边做边学」知识库插件：**工作前自动检索 → 卡住时
 ## 文档导航（docs/，对齐 aida-lld 规范）
 
 - [docs/design.md](docs/design.md) — aiCo 增量的架构与决策表
+- [docs/mock-kb-950.md](docs/mock-kb-950.md) — 950 示例知识库：内容、导入方式与工作原理
 - [docs/test-cases.md](docs/test-cases.md) — TC-* 与 `verify:graph` 断言映射
 - [docs/integration-report.md](docs/integration-report.md) — 安装门禁、事故记录（装错 profile 根因）、重启验证清单
 - [docs/spec/](docs/spec/) — 历次用户确认的 spec：01 图谱方案、02 视觉风格、03 收编更名

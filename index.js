@@ -18,6 +18,8 @@ import {
   listTriage, readTriageBody, restoreTriage, discardTriage,
 } from './lib/wiki.js'
 import { readFile, writeFile, unlink, stat } from 'node:fs/promises'
+import { statSync } from 'node:fs'
+import { spawn } from 'node:child_process'
 import { join, resolve as pathResolve, sep } from 'node:path'
 import { buildCorpus, scoreQuery, triage, recallable, looksLikeGap } from './lib/recall.js'
 import { appendGap, runAcquisition, readGaps } from './lib/acquire.js'
@@ -52,6 +54,70 @@ function resolveWithin(root, rel) {
   const normalizedRoot = pathResolve(root) + sep
   if (!pathResolve(p).startsWith(normalizedRoot)) return null
   return pathResolve(p)
+}
+
+/**
+ * 解析 Chromium 系浏览器的绝对路径。
+ *
+ * 为什么不能直接 spawn('msedge.exe')：spawn 只搜 PATH，而 Edge/Chrome
+ * 都不在 PATH 上（只在注册表 App Paths 里）—— 实测 spawn 必然 ENOENT，
+ * 然后静默落进 `cmd /c start` 兜底。所以必须自己解析出真实 exe 路径。
+ */
+function findBrowser() {
+  const roots = [
+    process.env['ProgramFiles(x86)'],
+    process.env['ProgramFiles'],
+    process.env['LocalAppData'],
+  ].filter(Boolean)
+  const candidates = []
+  for (const r of roots) {
+    candidates.push(join(r, 'Microsoft', 'Edge', 'Application', 'msedge.exe'))
+    candidates.push(join(r, 'Google', 'Chrome', 'Application', 'chrome.exe'))
+  }
+  return candidates.find((p) => { try { return statSync(p).isFile() } catch { return false } }) || null
+}
+
+/**
+ * 打开本地源文档（证据一键打开，spec 06 的落地面）。
+ *
+ * PDF 且带页码时走浏览器（file:// + #page=N）：Edge/Chrome 的内置阅读器
+ * 认这个片段，打开即跳页 —— 这是唯一跨阅读器可靠的"定点打开"方式。
+ * 其余类型（xlsx/docx/…）没有页的概念，交给系统默认程序。
+ * 失败绝不抛：打开是锦上添花，不能把写路径的 handler 炸掉。
+ */
+function openLocalDoc(file, page) {
+  const ext = file.slice(file.lastIndexOf('.')).toLowerCase()
+  const useBrowser = ext === '.pdf' && Number(page) > 0
+  // ★ 一次性 query：同一个 PDF 若已在浏览器里开着，再次用命令行打开时
+  //   Chromium 会直接复用已有标签页、丢弃新的 #page 锚 —— 这就是"每次
+  //   都从第一页开始"的根因。加个每次都不同的 ?_=ts 让 URL 变成新地址，
+  //   强制开新标签，#page 才会被阅读器执行（本地文件忽略 query，无副作用）。
+  const bust = '?_=' + Date.now()
+  const fileUrl = 'file:///' + encodeURI(file.replace(/\\/g, '/')).replace(/#/g, '%23')
+    + (useBrowser ? bust + '#page=' + Number(page) : '')
+  try {
+    if (process.platform === 'win32') {
+      if (useBrowser) {
+        const exe = findBrowser()
+        if (exe) {
+          spawn(exe, ['--new-window', fileUrl], { detached: true, stdio: 'ignore' }).unref()
+        } else {
+          // 实在找不到 Chromium 就退默认浏览器（页码锚可能被标签复用吞掉）。
+          spawn('cmd.exe', ['/c', 'start', '', fileUrl], { detached: true, stdio: 'ignore', windowsVerbatimArguments: true }).unref()
+        }
+      } else {
+        // explorer 用默认程序打开，且不弹黑窗（cmd start 会闪一下控制台）。
+        spawn('explorer.exe', [file], { detached: true, stdio: 'ignore' }).unref()
+      }
+    } else if (process.platform === 'darwin') {
+      spawn('open', [useBrowser ? fileUrl : file], { detached: true, stdio: 'ignore' }).unref()
+    } else {
+      spawn('xdg-open', [useBrowser ? fileUrl : file], { detached: true, stdio: 'ignore' }).unref()
+    }
+    return true
+  } catch {
+    return false
+  }
 }
 
 export const name = 'aico-local-wiki'
@@ -222,6 +288,22 @@ export function apply(ctx, pluginConfig = {}) {
   // 检测器始终读到最新阈值（阈值调了不用重启）。
   const liveCfg = { ...DEFAULTS, wikiRoot: baseRoot }
 
+  // ── 知识库热切换 ──
+  // getCfg 每次都从 baseRoot 解析配置；切换库的原理是给 loadConfig 塞一个
+  // wikiRoot override。选择持久化在 <baseRoot>/.active-root.json —— baseRoot
+  // 是宿主配置里唯一稳定的位置，重启后第一次 getCfg 就会把 override 读回来。
+  let rootOverride = null
+  let rootOverrideLoaded = false
+  const readRootOverride = async () => {
+    if (rootOverrideLoaded) return rootOverride
+    try {
+      const j = JSON.parse(await readFile(join(baseRoot, '.active-root.json'), 'utf8'))
+      if (j && typeof j.root === 'string' && j.root) rootOverride = j.root
+    } catch { /* 没有标记文件 = 用 baseRoot */ }
+    rootOverrideLoaded = true
+    return rootOverride
+  }
+
 // "看到了注入块但压不动"这件事最多记 3 次（见 pre-step 里那段注释）。
 // 上限是必要的：形状一旦真的变了，每步都会命中，不设上限就是刷屏 ——
 // 而一条刷屏的日志和一条没有的日志，在"能不能被发现"上是一样的。
@@ -239,7 +321,8 @@ let compactSeenBlock = false
 let compactPromotedSteps = 0
 let compactVerityLogged = false
   const getCfg = async () => {
-    const c = await loadConfig(baseRoot, pluginConfig)
+    const ov = await readRootOverride()
+    const c = await loadConfig(baseRoot, ov ? { ...pluginConfig, wikiRoot: ov } : pluginConfig)
     Object.assign(liveCfg, c)
     return c
   }
@@ -434,6 +517,59 @@ let compactVerityLogged = false
           try { await unlink(page.path) } catch { /* staged 原文件删不掉不致命 */ }
           log('ui: 已 commit ' + id)
           send(200, { ok: true, id, path: file })
+          return
+        }
+
+        // ── 写路径 2.6：切换知识库（wikiRoot 热切换）──
+        // 校验目标目录存在；新库（空目录）由 ensureRepo 铺骨架。
+        // 选择写进 <baseRoot>/.active-root.json，重启后依然生效；
+        // 改回 baseRoot（传 { reset: true }）即恢复宿主配置的默认库。
+        if (url.pathname === '/aico-local-wiki/api/switch-root' && req.method === 'POST') {
+          const body = await readBody()
+          if (body?.reset) {
+            rootOverride = null
+            try { await unlink(join(baseRoot, '.active-root.json')) } catch { /* 本来就没有 */ }
+            log('ui: switch-root reset -> ' + baseRoot)
+            send(200, { ok: true, wikiRoot: baseRoot, note: '已恢复默认知识库' })
+            return
+          }
+          const raw = String(body?.path ?? '').trim()
+          if (!raw) { send(400, { ok: false, error: '需要 { path } 或 { reset: true }' }); return }
+          const dir = pathResolve(raw.replace(/^file:\/\//i, '').replace(/^\/([A-Za-z]:)/, '$1'))
+          let st = null
+          try { st = await stat(dir) } catch { /* 走 404 */ }
+          if (!st || !st.isDirectory()) { send(404, { ok: false, error: '目录不存在: ' + dir }); return }
+          try { await ensureRepo(dir) } catch (e) { send(500, { ok: false, error: '初始化知识库失败: ' + String(e?.message ?? e) }); return }
+          rootOverride = dir
+          // 标记文件记「当前库 + 最近用过的库」，界面下次能给下拉。
+          let roots = []
+          try {
+            const j = JSON.parse(await readFile(join(baseRoot, '.active-root.json'), 'utf8'))
+            if (Array.isArray(j?.roots)) roots = j.roots
+          } catch { /* 首次 */ }
+          roots = [dir, ...roots.filter(r => r !== dir)].slice(0, 5)
+          await writeFile(join(baseRoot, '.active-root.json'), JSON.stringify({ root: dir, roots }, null, 2) + '\n', 'utf8')
+          log('ui: switch-root -> ' + dir)
+          send(200, { ok: true, wikiRoot: dir, roots })
+          return
+        }
+
+        // ── 写路径 2.5：打开本地源文档（证据一键跳转）──
+        // 前端的来源 chip 点击后打到这条。只接受本地已存在的文件路径；
+        // session:// 与 http(s) 一律 400 —— 网页链接前端自己就能开新标签。
+        if (url.pathname === '/aico-local-wiki/api/open-doc' && req.method === 'POST') {
+          const body = await readBody()
+          const raw = String(body?.path ?? '').trim()
+          const page = Math.max(0, Math.floor(Number(body?.page) || 0))
+          if (!raw) { send(400, { ok: false, error: '需要 { path }' }); return }
+          if (/^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) { send(400, { ok: false, error: '只支持本地文件路径' }); return }
+          const file = pathResolve(raw.replace(/^file:\/\//i, '').replace(/^\/([A-Za-z]:)/, '$1'))
+          let st = null
+          try { st = await stat(file) } catch { /* 走 404 */ }
+          if (!st || !st.isFile()) { send(404, { ok: false, error: '文件不存在: ' + file }); return }
+          const opened = openLocalDoc(file, page)
+          log('ui: open-doc -> ' + file + (page ? ' #page=' + page : '') + (opened ? '' : ' (spawn 失败)'))
+          send(opened ? 200 : 500, { ok: opened, path: file, page: page || null })
           return
         }
 
