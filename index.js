@@ -169,6 +169,14 @@ function buildUserMessage(text, source) {
 // 配套升级（v0.6.0，2026-10-25）：peer 与宿主对齐 0.2.1-rc.3，
 // 不再依赖 --accept-risk 豁免。tools.restrict 在 0.2.1 宿主缺失，
 // capabilities.js 已有运行时守卫（缺则跳过），compat 清单降为观察项。
+// 配套升级（v0.7.0，2026-11-06）：最新 desktop 宿主是 0.2.2-rc.1（未发布 npm）：
+// peer 扩为 OR 形 "^0.2.1-rc.3 || ^0.2.2-rc.1"（用宿主自带的 bundled semver 验证过
+// 单独 ^0.2.1-rc.3 会拒 0.2.2-rc.1），devDeps 仍 ^0.2.1-rc.3（发布版本上
+// maxSatisfying 选中它）。HOST_RANGE 字符串本身不变：本插件的极简比较器按数值比
+// （patch 2>1 在 prerelease 之前定胜负），0.2.2-rc.1 判 in-range，此处仅记日志、
+// 不拦截。同批把 dsh-client-ui-slots 从 dsh.client.inject 移除 —— 0.2.2-rc.1
+// 宿主 bundle 不再携带它，宿主 inject 是软性预置（缺失条目静默跳过），
+// 且客户端代码从未 require 过它，移除零风险。
 const HOST_RANGE = '>=0.2.1-rc.3 <0.3.0-0'
 
 function delegationDepth(agent) {
