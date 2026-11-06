@@ -67,6 +67,7 @@
     "verify:web": "node scripts/verify-web-acquire.mjs",
     "ui:probe": "node scripts/ui-probe.mjs",
     "ui:snapshot": "node scripts/ui-snapshot.mjs",
+    "build:client": "node scripts/build-client.mjs",
     "verify:gap-race": "node scripts/verify-gap-race.mjs"
   },
   "peerDependencies": {

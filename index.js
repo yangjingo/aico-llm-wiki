@@ -17,7 +17,7 @@ import {
   loadPages, ensureRepo, savePage, commitReadiness, readStagedBrief, countTriage,
   listTriage, readTriageBody, restoreTriage, discardTriage,
 } from './lib/wiki.js'
-import { readFile, writeFile, unlink, stat } from 'node:fs/promises'
+import { readFile, writeFile, unlink, stat, readdir } from 'node:fs/promises'
 import { statSync } from 'node:fs'
 import { spawn } from 'node:child_process'
 import { join, resolve as pathResolve, sep } from 'node:path'
@@ -517,6 +517,45 @@ let compactVerityLogged = false
           try { await unlink(page.path) } catch { /* staged 原文件删不掉不致命 */ }
           log('ui: 已 commit ' + id)
           send(200, { ok: true, id, path: file })
+          return
+        }
+
+        // ── 目录浏览：给前端换库弹窗列子目录（只读，不落任何状态）──
+        // path 为空时给盘符根（Windows）/ 文件系统根（POSIX）；
+        // 只返回目录、跳过点开头与系统回收目录，客户端点选下钻。
+        if (url.pathname === '/aico-llm-wiki/api/browse-dirs' && req.method === 'GET') {
+          const raw = String(url.searchParams.get('path') ?? '').trim()
+          const HIDDEN = /^\.(.*)$|^\$RECYCLE\.BIN$|^System Volume Information$/i
+          if (!raw) {
+            if (process.platform === 'win32') {
+              const probes = []
+              for (let c = 65; c <= 90; c++) {
+                const d = String.fromCharCode(c) + ':\\'
+                probes.push(stat(d).then(s => (s?.isDirectory() ? d : null)).catch(() => null))
+              }
+              const drives = (await Promise.all(probes)).filter(Boolean)
+              send(200, { ok: true, path: '', parent: null, dirs: drives })
+            } else {
+              let dirs = []
+              try {
+                const es = await readdir('/', { withFileTypes: true })
+                dirs = es.filter(e => e.isDirectory() && !HIDDEN.test(e.name)).map(e => join('/', e.name)).sort()
+              } catch (e) { send(500, { ok: false, error: '读取目录失败: ' + String(e?.message ?? e) }); return }
+              send(200, { ok: true, path: '/', parent: null, dirs })
+            }
+            return
+          }
+          const dir = pathResolve(raw.replace(/^file:\/\//i, '').replace(/^\/([A-Za-z]:)/, '$1'))
+          let st = null
+          try { st = await stat(dir) } catch { /* 走 404 */ }
+          if (!st || !st.isDirectory()) { send(404, { ok: false, error: '目录不存在: ' + dir }); return }
+          let dirs = []
+          try {
+            const es = await readdir(dir, { withFileTypes: true })
+            dirs = es.filter(e => e.isDirectory() && !HIDDEN.test(e.name)).map(e => join(dir, e.name)).sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'))
+          } catch (e) { send(500, { ok: false, error: '读取目录失败: ' + String(e?.message ?? e) }); return }
+          const parent = pathDirname(dir)
+          send(200, { ok: true, path: dir, parent: parent === dir ? null : parent, dirs })
           return
         }
 

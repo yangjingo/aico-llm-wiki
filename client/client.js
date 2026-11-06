@@ -1,3 +1,5 @@
+// ═══ 00-boot.js · 启动段：window.__ModuleLoader__ 装载 + React / DSH 原语引入 + API 端点常量 ═══
+// （源码文件，编辑后运行 pnpm run build:client 合成 client/client.js）
 /**
  * aico-llm-wiki —— 浏览器半。
  *
@@ -15,11 +17,17 @@
  *   3. 技能第一次有了位置（能力页签），成本拆成两笔：常驻（目录摘要，每轮都付）
  *      与触发（正文，只有真调用才付）。混着算会把结论说反。
  *   4. 每条知识可以就地读全文：展开行内取正文，不再二次弹窗。
+ * 结构：factory 体内按「模块分区」组织 —— env/api/format/ui/style/components/<页签>/contract，
+ * 各分区以「// ── 模块：… ──」注释标界；分区是物理重排，函数仍靠提升互相引用。
  */
 
 window.__ModuleLoader__.load({
   id: 'aico-llm-wiki',
   factory: (require) => {
+// ── 模块：env ──────────────────────────────────────────────────────
+// React 取用与 DSH 原语退化（P）：require 失败只能退化、不能抛。
+// 被本文件所有后续模块引用。
+
     var module = { exports: {} }
     var exports = module.exports
     Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' })
@@ -44,6 +52,11 @@ window.__ModuleLoader__.load({
       if (typeof console !== 'undefined') console.error('[aico-llm-wiki] DSH 原语不可用，退化为原生元素：', e)
     }
 
+// ── 模块：api ──────────────────────────────────────────────────────
+// 端点常量与取数封装（readJson/fail/getJson/post）。
+// 被各 components/* 页签组件调用。
+// （本文件只含端点常量；封装函数在 02-styles.js 尾部。）
+
     var API = '/aico-llm-wiki/api/state'
     var PAGE_API = '/aico-llm-wiki/api/page'
     var TRIAGE_API = '/aico-llm-wiki/api/triage'
@@ -54,7 +67,12 @@ window.__ModuleLoader__.load({
     var HARVEST_API = '/aico-llm-wiki/api/harvest'
     // 图谱也是独立端点：建图要遍历全库，不进 8 秒轮询（与服务端同一取舍）。
     var GRAPH_API = '/aico-llm-wiki/api/graph'
-
+// ═══ 01-primitives.js · UI 原语包装：Ico / Btn / Chip / Dot / Field / Md（宿主原语优先，退化不抛） ═══
+// （源码文件，编辑后运行 pnpm run build:client 合成 client/client.js）
+// ── 模块：ui（原语退化组件部分）──────────────────────────────────
+// 原语退化组件（Ico/Btn/Chip/Dot/Field/Md/Chev）与 toast/openDoc。
+// 依赖 env 的 P、api 的 OPEN_DOC_API。
+// （本文件只含 Ico/Btn/Chip/Dot/Field/Md；Chev/toast/openDoc 在 03-utils.js。）
     /** DSH 图标；没有原语时返回 null（不画假的代替品）。 */
     function Ico(name, size) {
       var C = P[name]
@@ -95,6 +113,11 @@ window.__ModuleLoader__.load({
       if (P.MarkdownText) return h(P.MarkdownText, { text: text })
       return h('pre', { className: 'lw-pre' }, text)
     }
+// ═══ 02-styles.js · 样式：全部 .lw-* CSS（华为红三色体系，spec 05/06） ═══
+// （源码文件，编辑后运行 pnpm run build:client 合成 client/client.js）
+// ── 模块：style ────────────────────────────────────────────────────
+// CSS 字符串（华为红三色体系，docs/spec/05-huawei-redesign.md）与 ensureStyle 注入。
+// 原文经 contract 的 exports.__css 交给截图工具。
     // ── 样式 ──────────────────────────────────────────────────────────────
     // 配色：华为红三色体系（docs/spec/05-huawei-redesign.md）。
     // 刻意不走 --dsw-* 主题 token——体系要求「红 + 灰蓝 + 中性灰」固定白底，
@@ -186,6 +209,28 @@ window.__ModuleLoader__.load({
       '.lw-rootswitch-edit{display:flex;flex-direction:column;gap:6px}',
       '.lw-rootswitch-edit .lw-input{width:100%;min-width:0;font-size:11px}',
       '.lw-rootswitch-acts{display:flex;gap:6px}',
+      // 换库目录选择弹窗：自绘小面板，列表区可滚动，底部操作行。
+      '.lw-rootpicker{width:min(460px,92vw);display:flex;flex-direction:column;gap:10px;padding:14px 16px;',
+      'box-sizing:border-box;border-radius:14px;border:1px solid var(--lw-line);background:var(--lw-surface);',
+      'box-shadow:0 1px 2px rgba(0,0,0,.08),0 16px 48px rgba(0,0,0,.18);color:var(--lw-fg)}',
+      '.lw-rootpicker-head{display:flex;align-items:center;justify-content:space-between;',
+      'font:var(--dsw-font-s-strong-14,600 14px/22px \'Noto Sans SC\',sans-serif)}',
+      '.lw-rootpicker-path{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg3);',
+      'font-variant-numeric:tabular-nums;padding:6px 8px;border:1px dashed var(--lw-line-soft);border-radius:7px;',
+      'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:rtl;text-align:left}',
+      '.lw-rootpicker-err{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-bad)}',
+      '.lw-rootpicker-list{min-height:180px;max-height:min(320px,44vh);overflow:auto;display:flex;flex-direction:column;gap:2px;',
+      'border:1px solid var(--lw-line-soft);border-radius:8px;padding:4px}',
+      '.lw-rootpicker-item{display:block;width:100%;padding:7px 9px;border:0;border-radius:6px;background:none;cursor:pointer;',
+      'font:var(--dsw-font-xs-13,13px/20px \'Noto Sans SC\',sans-serif);color:var(--lw-fg2);text-align:left;overflow:hidden;',
+      'text-overflow:ellipsis;white-space:nowrap}',
+      '.lw-rootpicker-item:hover{background:var(--lw-hover);color:var(--lw-fg)}',
+      '.lw-rootpicker-item:focus-visible{outline:2px solid var(--lw-brand);outline-offset:-2px}',
+      '.lw-rootpicker-empty{padding:18px 10px;text-align:center;color:var(--lw-fg4);',
+      'font:var(--dsw-font-xs-13,13px/20px \'Noto Sans SC\',sans-serif)}',
+      '.lw-rootpicker-acts{display:flex;align-items:center;gap:6px}',
+      '.lw-rootpicker-sp{flex:1}',
+      '.lw-rootpicker-ok{color:var(--lw-brand);border-color:var(--lw-brand)}',
       '.lw-nav-grp{font-family:\'JetBrains Mono\',\'Noto Sans SC\',ui-monospace,monospace;font-size:11px;',
       'letter-spacing:.18em;color:var(--lw-fg4);padding:14px 18px 6px}',
       '.lw-nav-item{display:flex;align-items:center;gap:10px;width:100%;padding:10px 16px 10px 15px;border:0;',
@@ -258,10 +303,9 @@ window.__ModuleLoader__.load({
       '.lw-table{width:100%;border-collapse:collapse;table-layout:fixed}',
       // 表头 = 标准表格语汇：品牌红底 + 白字居中粗体（独立于卡片的浅灰边框体系）。
       '.lw-th{position:sticky;top:0;z-index:2;text-align:center;font:var(--dsw-font-xxxs-strong-11,700 11px/16px \'Noto Sans SC\',sans-serif);color:#fff;',
-      'padding:6px 8px;background:#b5333b;border-bottom:1px solid #9c2c33;white-space:nowrap}',
+      'padding:6px 8px;background:#b5333b;white-space:nowrap}',
       '.lw-th.r,.lw-td.r{text-align:right}',
-      '.lw-td{padding:7px 8px;border-bottom:1px solid var(--lw-line-soft);vertical-align:middle;',
-      'overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+      '.lw-td{padding:7px 8px;vertical-align:middle}',
       '.lw-tr.x{cursor:pointer}',
       '.lw-tr.x:hover>.lw-td{background:var(--lw-hover)}',
       '.lw-tr.x[aria-expanded="true"]>.lw-td{background:var(--lw-active)}',
@@ -271,16 +315,15 @@ window.__ModuleLoader__.load({
       '.lw-src{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);font-family:\'JetBrains Mono\',\'Noto Sans SC\',ui-monospace,monospace;color:var(--lw-fg3)}',
       // 双行单元格：主行是标识符，副行是用途。列仍然是固定的，只是行变高了。
       '.lw-2l{display:flex;flex-direction:column;gap:1px;min-width:0;white-space:normal}',
-      '.lw-sub{font:var(--dsw-font-xxxs-11,11px/15px \'Noto Sans SC\',sans-serif);color:var(--lw-fg4);',
-      'overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+      '.lw-sub{font:var(--dsw-font-xxxs-11,11px/15px \'Noto Sans SC\',sans-serif);color:var(--lw-fg4)}',
       // 工具名 + 行内状态标记。状态写在行里，不靠位置表达——
       // 位置一旦随勾选变化，就没法连续点第二下了。
       '.lw-name{font-family:\'JetBrains Mono\',\'Noto Sans SC\',ui-monospace,monospace;',
       'display:inline-flex;align-items:center;gap:6px;min-width:0}',
       '.lw-off{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);line-height:15px;padding:0 5px;',
-      'border-radius:4px;border:1px solid var(--lw-line);color:var(--lw-fg4);flex:none}',
+      'color:var(--lw-fg4);flex:none}',
       // 族分组标题。族说一次就够，不必在每一行重复。
-      '.lw-group>.lw-td{padding:12px 8px 4px;border-bottom:1px solid var(--lw-line);background:transparent;',
+      '.lw-group>.lw-td{padding:12px 8px 4px;background:transparent;',
       'position:sticky;top:22px;z-index:1;background:var(--lw-surface)}',
       '.lw-group-name{font:var(--dsw-font-xxxs-strong-11,600 11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg2);',
       'font-family:\'JetBrains Mono\',\'Noto Sans SC\',ui-monospace,monospace}',
@@ -309,16 +352,14 @@ window.__ModuleLoader__.load({
       'font-variant-numeric:tabular-nums;margin:0 0 10px}',
       '.lw-srclist{margin:10px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}',
       '.lw-srclist li{display:flex;align-items:center;gap:6px;min-width:0}',
-      '.lw-srclist a{color:var(--lw-info);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+      '.lw-srclist a{color:var(--lw-info);text-decoration:none}',
       '.lw-srclist a:hover{text-decoration:underline}',
       // 溯源 chips（spec 06 修订）：类型徽标 + 短值；类型色走三色体系。
       '.lw-srcline{display:inline-flex;gap:4px;align-items:center;min-width:0;flex-wrap:wrap}',
-      '.lw-srcchip{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);border:1px solid var(--lw-line);',
-      'border-radius:99px;padding:0 7px;color:var(--lw-fg2);white-space:nowrap;max-width:150px;',
-      'overflow:hidden;text-overflow:ellipsis}',
-      '.lw-src-session{border-color:#b5333b;color:#b5333b}',
-      '.lw-src-doc{border-color:#566472;color:#566472}',
-      '.lw-src-url{border-color:#1565c0;color:#1565c0}',
+      '.lw-srcchip{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);color:var(--lw-fg2)}',
+      '.lw-src-session{color:#b5333b}',
+      '.lw-src-doc{color:#566472}',
+      '.lw-src-url{color:#1565c0}',
       'a.lw-srcchip:hover{background:color-mix(in srgb,var(--lw-brand) 8%,transparent)}',
       // 文档类 chip 可点击（打开本地源文件），给一点"能按"的手感。
       'a.lw-src-doc{cursor:pointer}',
@@ -334,8 +375,8 @@ window.__ModuleLoader__.load({
       '.lw-input{box-sizing:border-box;flex:1;min-width:150px;padding:5px 9px;border-radius:7px;',
       'border:1px solid var(--lw-line);background:transparent;color:var(--lw-fg);font:inherit}',
       '.lw-input::placeholder{color:var(--lw-fg4)}',
-      '.lw-chip{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);padding:1px 7px;border-radius:99px;border:1px solid var(--lw-line);color:var(--lw-fg2);white-space:nowrap}',
-      '.lw-chip.lw-on{border-color:var(--lw-brand);color:var(--lw-fg)}',
+      '.lw-chip{font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);padding:1px 7px;border-radius:99px;color:var(--lw-fg2);white-space:nowrap}',
+      '.lw-chip.lw-on{color:var(--lw-fg)}',
 // 状态胶囊：给「状态」这一类事实一个统一的视觉语言（点 + 底色 + 描边），
 // 颜色取自语义 token；跳过/已产出/待处理/放弃 一眼可辨，不必读文字。
 '.lw-st{display:inline-flex;align-items:center;gap:5px;padding:1px 8px;border-radius:99px;border:1px solid var(--lw-line);font:var(--dsw-font-xxxs-11,11px/16px \'Noto Sans SC\',sans-serif);white-space:nowrap;color:var(--lw-fg2)}',
@@ -694,6 +735,8 @@ window.__ModuleLoader__.load({
      * （404 + HTML）完全盖住，我照着它查了半天前端代码。
      * 现在先把状态码和 content-type 摆出来，解析失败反而是最后才提的事。
      */
+// ── 模块：api（取数封装部分）────────────────────────────────────
+// （分区头与端点常量见 00-boot.js。）
     function readJson(r) {
       var ct = (r.headers && r.headers.get && r.headers.get('content-type')) || ''
       return r.text().then(function (raw) {
@@ -721,6 +764,13 @@ window.__ModuleLoader__.load({
         body: JSON.stringify(body || {}),
       }).then(readJson).catch(fail)
     }
+// ═══ 03-utils.js · 小工具：通用渲染辅助 ═══
+// （源码文件，编辑后运行 pnpm run build:client 合成 client/client.js）
+// ── 模块：format ───────────────────────────────────────────────────
+// 纯函数：num/tok/when/CLS/clsInfo/SIG/sourceKind/num0。不碰 DOM，
+// 离线可断言；判据经 contract 的 exports.__logic 暴露给结构测试。
+// （num0 在 10-shell.js。）
+
     // ── 小工具 ────────────────────────────────────────────────────────────
     function num(n) {
       var v = Number(n)
@@ -788,6 +838,8 @@ window.__ModuleLoader__.load({
       return { kind: 'doc', label: '文档', short: ((base || pure) + (page ? ' ·P' + page : '')).slice(0, 26), full: v, docPath: pure, page: page }
     }
 
+// ── 模块：ui（toast/openDoc 部分）────────────────────────────────
+// （分区头见 01-primitives.js；含本文件后部的 Chev。）
     /** 轻提示：右下角一条，3 秒自灭。开文档成功/失败都不打断当前页面。 */
     function toast(text, bad) {
       try {
@@ -814,6 +866,8 @@ window.__ModuleLoader__.load({
     }
     function openDocSource(full) { return openDoc(sourceKind(full)) }
 
+// ── 模块：components/knowledge（溯源 chips/占比条部分）───────────
+// （分区主体见 06-knowledge.js；筛选/视图纯函数见 04-view-logic.js。）
     /** 一行溯源 chips：最多 2 个 + 「+N」，title 带全量。 */
     function SourceChips(props) {
       var list = (props.sources || []).map(sourceKind)
@@ -854,6 +908,11 @@ window.__ModuleLoader__.load({
         h('span', { className: 'lw-lval' }, props.display != null ? props.display : num(props.value))
       )
     }
+// ═══ 04-view-logic.js · 视图纯函数：不碰 DOM 的派生/筛选逻辑 ═══
+// （源码文件，编辑后运行 pnpm run build:client 合成 client/client.js）
+// ── 模块：components/tools（排序/分组/可见性纯函数部分）─────────
+// ── 模块：components/knowledge（筛选/视图纯函数部分）────────────
+// （两区主体见 05-capabilities.js / 06-knowledge.js。）
     // ── 视图逻辑：纯函数，不碰 DOM ────────────────────────────────────────
     //
     // 排序/分组/筛选从组件里提出来，是为了**能被离线断言**。
@@ -999,6 +1058,11 @@ window.__ModuleLoader__.load({
         select(ids[n])
       }
     }
+// ═══ 05-capabilities.js · 能力页签组件：工具 + 技能（常驻/触发成本两笔账） ═══
+// （源码文件，编辑后运行 pnpm run build:client 合成 client/client.js）
+// ── 模块：components/tools ────────────────────────────────────────
+// 工具表：行序/分组/可见性纯函数 + ToolsSection。
+// （纯函数部分在 04-view-logic.js。）
 
     // ── 能力：工具 + 技能 ─────────────────────────────────────────────────
     function ToolsSection(props) {
@@ -1237,6 +1301,8 @@ window.__ModuleLoader__.load({
       )
     }
 
+// ── 模块：components/skills ───────────────────────────────────────
+// 技能表：常驻/触发两笔成本分开算。
     function SkillsSection(props) {
       var sk = props.state.skills || {}
       var items = sk.items || []
@@ -1367,6 +1433,8 @@ window.__ModuleLoader__.load({
      * 分段是替换——切回来时位置由这一段的顶部重新开始，可预期。
      * 数字标在段上，所以不必点进去才知道另一边有多少。
      */
+// ── 模块：components/capabilities ─────────────────────────────────
+// 能力页签外壳：工具 + 技能两节拼装。
     function CapabilitiesTab(props) {
       var segState = useState((props && props.initialSeg) || 'tools')
       var seg = segState[0], setSeg = segState[1]
@@ -1399,6 +1467,13 @@ window.__ModuleLoader__.load({
         seg === 'tools' ? h(ToolsSection, props) : h(SkillsSection, props)
       )
     }
+// ═══ 06-knowledge.js · 知识页签组件：可展开活行表格 + 暂存区 ═══
+// （源码文件，编辑后运行 pnpm run build:client 合成 client/client.js）
+// ── 模块：components/knowledge ────────────────────────────────────
+// 知识页签：筛选档/视图纯函数 + KnowledgeTab/KbTree/KbTreeNode/PageDetail，
+// 以及溯源 chips（SourceChips）与占比条（BarRow）。
+// （纯函数在 04-view-logic.js；SourceChips/BarRow 在 03-utils.js。）
+
     // ── 知识：可展开的活行 ────────────────────────────────────────────────
     function KnowledgeTab(props) {
       var k = props.state.knowledge || {}
@@ -1786,6 +1861,11 @@ window.__ModuleLoader__.load({
         })) : h('p', { className: 'lw-note c-bad' }, '这条知识没有来源。')
       )
     }
+// ═══ 07-acquire.js · 补料页签组件：缺口队列 + 补料记录 ═══
+// （源码文件，编辑后运行 pnpm run build:client 合成 client/client.js）
+// ── 模块：components/harvest ──────────────────────────────────────
+// 补料页签：HarvestSection（缺口队列）+ SupplyTab。
+
     // ── 补料 ──────────────────────────────────────────────────────────────
     /**
      * 「从会话提炼」—— wiki_harvest 的触发按键。
@@ -1974,6 +2054,11 @@ window.__ModuleLoader__.load({
         )
       )
     }
+// ═══ 08-models.js · 模型页签组件：谁在问哪个模型、轮换还是单一 ═══
+// （源码文件，编辑后运行 pnpm run build:client 合成 client/client.js）
+// ── 模块：components/models ───────────────────────────────────────
+// 模型页签：ModelListEditor/buildLlmDraft/ModelsTab。
+
     // ── 模型：谁在问哪个模型，以及轮换还是单一 ────────────────────────────
     //
     // 为什么值得单独一个页签：这个插件的**全部成本**就是模型调用（后台蒸馏 +
@@ -2229,6 +2314,10 @@ window.__ModuleLoader__.load({
         )
       )
     }
+// ═══ 09-graph.js · 图谱：vendor UMD 加载 + 知识结构力导向可视化 ═══
+// （源码文件，编辑后运行 pnpm run build:client 合成 client/client.js）
+// ── 模块：components/graph ────────────────────────────────────────
+// 知识图谱：vendor UMD 注入（loadVendorScript）+ D3Graph + 视觉判据纯函数 + GraphTab。
 
     // ── 三方包加载：client/vendor 的 UMD 经宿主静态路由注入 ────────────────
     //
@@ -2643,6 +2732,12 @@ window.__ModuleLoader__.load({
         ) : null
       )
     }
+// ═══ 10-shell.js · 外壳组件：主面板接管 + 二级界面（目录导航/KPI 带） ═══
+// （源码文件，编辑后运行 pnpm run build:client 合成 client/client.js）
+// ── 模块：components/shell ────────────────────────────────────────
+// 外壳：TABS/tabsSummary/navBadge/titleParts/kpiItems/PanelBody/Workbench，
+// 二级界面（spec 05 重绘）与换肤（loadTheme/saveTheme）、换库（RootSwitch）。
+// （format 分区的 num0 也在本文件。）
 
     // ── 外壳 ──────────────────────────────────────────────────────────────
     var TABS = [
@@ -2727,18 +2822,23 @@ window.__ModuleLoader__.load({
     }
 
     var ROOT_API = '/aico-llm-wiki/api/switch-root'
-    /** 知识库切换：显示当前路径，「点击」展开输入框；提交后 POST 切换并刷新。
-     *  服务端校验目录、给新库铺骨架、并把选择持久化（重启不丢）。 */
+    var BROWSE_API = '/aico-llm-wiki/api/browse-dirs'
+    /** 取路径末段做显示名（兼容 \ 与 /）。 */
+    function rootBaseName(p) {
+      var s = String(p || '').replace(/[\\/]+$/, '')
+      var i = Math.max(s.lastIndexOf('\\'), s.lastIndexOf('/'))
+      return i >= 0 ? s.slice(i + 1) : s
+    }
+    /** 知识库切换：显示当前路径，「点击」弹出目录选择弹窗；不再手输路径。
+     *  弹窗由服务端列目录（/api/browse-dirs），点选下钻、上一级回退，
+     *  选定后 POST /api/switch-root 切换并刷新。 */
     function RootSwitch(props) {
       var root = (props.state && props.state.app && props.state.app.wikiRoot) || ''
       var editState = useState(false)
       var editing = editState[0], setEditing = editState[1]
-      var valState = useState('')
-      var val = valState[0], setVal = valState[1]
       var busyState = useState(false)
       var busy = busyState[0], setBusy = busyState[1]
-      var submit = function () {
-        var p = String(val || '').trim()
+      var pick = function (p) {
         if (!p || busy) return
         setBusy(true)
         post(ROOT_API, { path: p }).then(function (r) {
@@ -2757,36 +2857,91 @@ window.__ModuleLoader__.load({
           type: 'button',
           className: 'lw-rootswitch',
           title: root + '（点击更换知识库）',
-          onClick: function () { setVal(root); setEditing(true) },
+          onClick: function () { setEditing(true) },
         },
           h('span', { className: 'lw-rootswitch-n' }, '库'),
           h('span', { className: 'lw-rootswitch-p' }, root || '连接中…'))
       }
-      return h('div', { className: 'lw-rootswitch-edit' },
-        h('input', {
-          className: 'lw-input',
-          value: val,
-          placeholder: '输入知识库目录完整路径',
-          autoFocus: true,
-          onChange: function (e) { setVal(e.target.value) },
-          onKeyDown: function (e) {
-            if (e.key === 'Enter') submit()
-            if (e.key === 'Escape') setEditing(false)
-          },
-        }),
-        h('div', { className: 'lw-rootswitch-acts' },
-          h('button', { type: 'button', className: 'lw-mini', disabled: busy, onClick: submit }, busy ? '切换中…' : '切换'),
-          h('button', { type: 'button', className: 'lw-mini', onClick: function () { setEditing(false) } }, '取消'),
-          root ? h('button', {
-            type: 'button', className: 'lw-mini',
-            title: '清除切换记录，恢复宿主配置的默认库',
-            onClick: function () {
-              post(ROOT_API, { reset: true }).then(function (r) {
-                if (r.j && r.j.ok) { toast('已恢复默认知识库'); setEditing(false); props.onChanged && props.onChanged() }
-                else toast('恢复失败：' + ((r.j && r.j.error) || r.error), true)
-              })
-            },
-          }, '恢复默认') : null))
+      return h(RootPicker, {
+        initial: root,
+        busy: busy,
+        onClose: function () { setEditing(false) },
+        onPick: pick,
+        onReset: function () {
+          post(ROOT_API, { reset: true }).then(function (r) {
+            if (r.j && r.j.ok) { toast('已恢复默认知识库'); setEditing(false); props.onChanged && props.onChanged() }
+            else toast('恢复失败：' + ((r.j && r.j.error) || r.error), true)
+          })
+        },
+      })
+    }
+
+    /** 目录选择弹窗：服务端只列子目录（跳过隐藏/系统目录），
+     *  单击进入、上一级回退、到根后回盘符列表；全程没有可手输的路径框。 */
+    function RootPicker(props) {
+      var curState = useState(props.initial || '')
+      var cur = curState[0], setCur = curState[1]
+      var parentState = useState(undefined)
+      var parent = parentState[0], setParent = parentState[1]
+      var listState = useState(null)
+      var list = listState[0], setList = listState[1]
+      var errState = useState(null)
+      var err = errState[0], setErr = errState[1]
+      var load = useCallback(function (p) {
+        getJson(BROWSE_API + '?path=' + encodeURIComponent(p || '')).then(function (r) {
+          if (r.j && r.j.ok) {
+            setCur(r.j.path || '')
+            setParent(r.j.parent === undefined ? null : r.j.parent)
+            setList(r.j.dirs || [])
+            setErr(null)
+          } else {
+            setErr((r.j && r.j.error) || r.error || ('HTTP ' + r.status))
+            setList([])
+          }
+        })
+      }, [])
+      useEffect(function () { load(props.initial || '') }, [load, props.initial])
+      return h('div', {
+        className: 'lw-mask',
+        onClick: function (e) { if (e.target === e.currentTarget) props.onClose() },
+      },
+        h('div', {
+          className: 'lw-rootpicker', role: 'dialog', 'aria-modal': 'true',
+          'aria-label': '选择知识库目录', tabIndex: -1,
+          onKeyDown: function (e) { if (e.key === 'Escape') props.onClose() },
+        },
+          h('div', { className: 'lw-rootpicker-head' },
+            h('span', null, '选择知识库目录'),
+            h('button', { type: 'button', className: 'lw-mini', title: '关闭', onClick: props.onClose }, '×')),
+          h('div', { className: 'lw-rootpicker-path', title: cur }, cur || '此电脑（选择盘符进入）'),
+          err ? h('div', { className: 'lw-rootpicker-err' }, err) : null,
+          h('div', { className: 'lw-rootpicker-list' },
+            list === null
+              ? h('div', { className: 'lw-rootpicker-empty' }, '读取中…')
+              : list.length === 0
+                ? h('div', { className: 'lw-rootpicker-empty' }, '此目录下没有子目录')
+                : list.map(function (d) {
+                  return h('button', {
+                    key: d, type: 'button', className: 'lw-rootpicker-item',
+                    title: d,
+                    onClick: function () { load(d) },
+                  }, rootBaseName(d))
+                })),
+          h('div', { className: 'lw-rootpicker-acts' },
+            h('button', {
+              type: 'button', className: 'lw-mini',
+              disabled: !cur || parent === null || parent === undefined,
+              onClick: function () { load(parent) },
+            }, '上一级'),
+            h('button', { type: 'button', className: 'lw-mini', title: '清除切换记录，恢复宿主配置的默认库', onClick: props.onReset }, '恢复默认'),
+            h('span', { className: 'lw-rootpicker-sp' }),
+            h('button', { type: 'button', className: 'lw-mini', onClick: props.onClose }, '取消'),
+            h('button', {
+              type: 'button', className: 'lw-mini lw-rootpicker-ok',
+              disabled: !cur || props.busy,
+              title: cur ? '把知识库切到 ' + cur : '先进入一个目录',
+              onClick: function () { props.onPick(cur) },
+            }, props.busy ? '切换中…' : '选择此目录'))))
     }
 
     /** 导航徽标：只给「有待办」的页——数字说有事，导航就该带计数。 */
@@ -3114,6 +3269,8 @@ window.__ModuleLoader__.load({
      *   2. 永久删除是**不可逆**的，所以两段确认；服务端另有一道 confirm 守卫
      *      （前端这道是给人看的，服务端那道才是真的闸）。
      */
+// ── 模块：components/triage ───────────────────────────────────────
+// 分拣页签：TriageTab。
     function TriageTab(props) {
       ensureStyle()
       // 受控模式（离线渲染/截图）直接给 items，与 PanelBody / PendingBar 同一套惯例。
@@ -3285,6 +3442,11 @@ window.__ModuleLoader__.load({
             )
       )
     }
+// ═══ 11-todos.js · 待办组件：角标 + 输入框上方待办条 + 会话框提示卡 ═══
+// （源码文件，编辑后运行 pnpm run build:client 合成 client/client.js）
+// ── 模块：components/pending ──────────────────────────────────────
+// 待办：订阅式 store（makeStore/useBench/usePending）+ 轮询（loadPending 等）+
+// FooterEntry/PendItem/PendingBar + wiki_recall 对话内卡片（recall*/RecallFacts/RecallRow/RecallCard/WikiIcon）。
 
     // ── 待办：谁在等、怎么把面板打开 ─────────────────────────────────────
     //
@@ -3831,6 +3993,8 @@ window.__ModuleLoader__.load({
      *  关闭 / 否则 spring 回弹；单击直接 armed）→ 退场编排 → close()。
      *  退出机制不变：close() → panelDeactivate → layout.selectPanel(null)，
      *  main 注册常驻不注销（关掉还能再开）。 */
+// ── 模块：components/plugin ───────────────────────────────────────
+// 主面板接管与插件页入口：AicoWikiCenter/isOwnBundle/usePanelActive/AicoPluginItem/AicoPluginSection。
     function AicoWikiCenter(props) {
       ensureStyle()
       var entryTab = (typeof props.entryTab === 'function' ? props.entryTab() : props.entryTab) || 'graph'
@@ -3984,6 +4148,10 @@ window.__ModuleLoader__.load({
           active ? '关闭' : '打开工作台')
       )
     }
+// ═══ 12-contract.js · 插件契约：slots 注入与导出（本文件的收口） ═══
+// （源码文件，编辑后运行 pnpm run build:client 合成 client/client.js）
+// ── 模块：contract ─────────────────────────────────────────────────
+// 插件契约收口：name/inject/apply 与 exports（__components/__logic/__css）。
 
     // ── 插件契约 ──
     var name = 'aico-llm-wiki'
